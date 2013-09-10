@@ -1,0 +1,21 @@
+{
+  "name": "arabika",
+  "version": "0.0.0",
+  "description": "A language that compiles to JavaScript",
+  "main": "lib/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/loveencounterflow/arabika.git"
+  },
+  "keywords": [
+    "CoffeeScript"
+  ],
+  "author": "",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/loveencounterflow/arabika/issues"
+  }
+}
