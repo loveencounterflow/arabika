@@ -106,11 +106,13 @@ Point (2) is not possible with a `switch`-dispatcher.
       [ identifier_node, expression_node ] = content
       unless ( sub_type = identifier_node[ 0 ] ) is 'identifier'
         throw new Error "expected identifier node, got #{sub_type}"
-      crumbs = identifier_node[ 1 ]
+      crumbs_node = [ 'crumbs', identifier_node[ 1 ], ]
+      return "$v#{@as_coffeescript crumbs_node} = #{@as_coffeescript expression_node}"
+    #.......................................................................................................
+    when 'crumbs'
       ### TAINT must escape identifier ###
       ### TAINT shouldn't we also use variables in the target language? ###
-      crumbs_txt = ( "[ '#{crumb}' ]" for crumb in crumbs ).join ''
-      return "$v#{crumbs_txt} = #{@as_coffeescript expression_node}"
+      return ( "[ '#{crumb}' ]" for crumb in content ).join ''
     #.......................................................................................................
     when 'expression'
       ### TAINT how to join? ###
@@ -129,9 +131,7 @@ Point (2) is not possible with a `switch`-dispatcher.
       return rpr content[ 1 ]
     #.......................................................................................................
     when 'symbol'
-      whisper node
-      whisper content
-      return rpr content[ 1 ]
+      return @as_coffeescript [ 'text', '"', content[ 0 ], '"' ]
     #.......................................................................................................
     when 'use'
       ### TAINT `use` statement not to be translated ###
