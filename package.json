@@ -19,6 +19,8 @@
     "url": "https://github.com/loveencounterflow/arabika/issues"
   },
   "dependencies": {
-    "coffeenode-packrattle": "^3.0.1"
+    "coffeenode-packrattle": "^3.0.1",
+    "coffeenode-multimix": "^0.1.3",
+    "glob": "^3.2.9"
   }
 }
