@@ -129,7 +129,7 @@ Point (2) is not possible with a `switch`-dispatcher.
       return rpr content[ 1 ]
     #.......................................................................................................
     when 'symbol'
-      ### TAINT text literal should be kept intact ###
+      whisper node
       whisper content
       return rpr content[ 1 ]
     #.......................................................................................................
