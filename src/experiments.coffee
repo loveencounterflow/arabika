@@ -23,12 +23,10 @@ glob                      = require 'glob'
 forked from https://github.com/robey/packrattle ###
 π                         = require 'coffeenode-packrattle'
 #...........................................................................................................
-@new                      = require './nodes'
 A                         = require './main'
 
-info A
+# info A
 info name for name of A
-
 
 
 ### TAINT translation routines should be
@@ -93,48 +91,48 @@ Point (2) is not possible with a `switch`-dispatcher.
 
 
 ############################################################################################################
-node = A.assignment.run 'xy: 20 + 3'
+node = A.UNSORTED.assignment.run 'xy: 20 + 3'
 info @as_coffeescript node
-node = A.assignment.run 'foo/bar: 20 + 3'
+node = A.UNSORTED.assignment.run 'foo/bar: 20 + 3'
 info @as_coffeescript node
-# node = A.assignment.run 'foo/bar: gnu/cram'
+# node = A.UNSORTED.assignment.run 'foo/bar: gnu/cram'
 # info @as_coffeescript node
 
 
 
-info '\n' + rpr A.list.run '[ 3, 10, 200 ]'
-info '\n' + rpr A.list.run '[]'
+info '\n' + rpr A.UNSORTED.list.run '[ 3, 10, 200 ]'
+info '\n' + rpr A.UNSORTED.list.run '[]'
 
-info '\n' + rpr A.assignment.run 'xy: 20 + 3'
+info '\n' + rpr A.UNSORTED.assignment.run 'xy: 20 + 3'
 
-info '\n' + rpr A.expression.run '3 + 10 + 200'
-info '\n' + rpr A.expression.run '3 * 10 + 200'
-info '\n' + rpr A.expression.run '3 + 10 * 200'
-info '\n' + rpr A.expression.run '42'
+info '\n' + rpr A.UNSORTED.expression.run '3 + 10 + 200'
+info '\n' + rpr A.UNSORTED.expression.run '3 * 10 + 200'
+info '\n' + rpr A.UNSORTED.expression.run '3 + 10 * 200'
+info '\n' + rpr A.UNSORTED.expression.run '42'
 
 
-info rpr A._single_quote.run  "'"
-info rpr A._double_quote.run  '"'
-info rpr A._chr_escaper.run   '\\'
-info rpr A.simple_escape.run 'n'
-info rpr A._unicode_hex.run   'u4e01'
-info rpr A._escaped.run       '\\u4e01'
-info rpr A._escaped.run       '\\n'
-info rpr A._nosq.run          'abcdef'
-info rpr A._nodq.run          'ioxuy'
-info rpr A._dq_text_literal.run '"foo"'
-info rpr A._sq_text_literal.run "'foo'"
-info rpr node = A.text_literal.run  '"helo"'
+info rpr A.TEXT._single_quote.run  "'"
+info rpr A.TEXT._double_quote.run  '"'
+info rpr A.TEXT._chr_escaper.run   '\\'
+info rpr A.TEXT.simple_escape.run 'n'
+info rpr A.TEXT._unicode_hex.run   'u4e01'
+info rpr A.TEXT._escaped.run       '\\u4e01'
+info rpr A.TEXT._escaped.run       '\\n'
+info rpr A.TEXT._nosq.run          'abcdef'
+info rpr A.TEXT._nodq.run          'ioxuy'
+info rpr A.TEXT._dq_text_literal.run '"foo"'
+info rpr A.TEXT._sq_text_literal.run "'foo'"
+info rpr node = A.TEXT.text_literal.run  '"helo"'
 debug '\n' + @as_coffeescript node
-info rpr node = A.text_literal.run  "'helo'"
+info rpr node = A.TEXT.text_literal.run  "'helo'"
 debug '\n' + @as_coffeescript node
 
 
-info node = A.use_statement.run 'use 123'
+info node = A.BASE.use_statement.run 'use 123'
 debug '\n' + @as_coffeescript node
-info node = A.use_statement.run 'use :foo'
+info node = A.BASE.use_statement.run 'use :foo'
 debug '\n' + @as_coffeescript node
-info node = A.use_statement.run 'use "foo\nbar"'
+info node = A.BASE.use_statement.run 'use "foo\nbar"'
 debug '\n' + @as_coffeescript node
 
 # ESPRIMA                   = require 'esprima'
@@ -145,61 +143,4 @@ debug '\n' + @as_coffeescript node
 
 # info ESCODEGEN.generate node
 # info ESPRIMA.parse 'var a = "3 + 4"'
-
-new_tsort_graph = require 'tsort'
-
-# create an empty graph
-g = new_tsort_graph()
-
-# add nodes
-g.add "a", "b"
-g.add "b", "c"
-g.add "0", "a"
-
-# outputs: [ '0', 'a', 'b', 'c' ]
-info g.sort()
-
-# can add more than one node
-g.add "1", "2", "3", "a"
-
-# outputs: [ '0', '1', '2', '3', 'a', 'b', 'c' ]
-info g
-info g.sort()
-info g
-
-# can add in array form
-g.add [
-  "1"
-  "1.5"
-]
-g.add [
-  "1.5"
-  "a"
-]
-
-# outputs: [ '0', '1', '2', '3', '1.5', 'a', 'b', 'c' ]
-info g.sort()
-
-# detects cycles
-g.add "first", "second"
-g.add "second", "third"
-g.sort()
-g.add "third", "first"
-offender = g[ 'nodes' ][ 'first' ]
-for element, idx in offender
-  offender[ idx ] += '%' if element is 'third'
-  g[ 'nodes' ][ 'third%' ] = []
-debug g
-try
-  info g.sort()
-catch error
-  throw error unless /^There is a cycle in the graph/.test error[ 'message' ]
-  warn g
-
-
-
-# debug name for name of π.alt ->
-
-
-
 

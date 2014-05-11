@@ -18,8 +18,7 @@ echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
 π                         = require 'coffeenode-packrattle'
-# WS                        = require './3-whitespace'
-A                         = require './main'
+NEW                       = require './new'
 
 #-----------------------------------------------------------------------------------------------------------
 @_single_quote    = π.string "'"
@@ -36,7 +35,7 @@ A                         = require './main'
 @text_literal     = ( π.alt @_sq_text_literal, @_dq_text_literal )
   .onMatch ( match ) =>
     [ ignore, value, ignore, ] = match
-    return A.new.literal ( match.join '' ), value
+    return NEW.literal ( match.join '' ), value
 
 
 #-----------------------------------------------------------------------------------------------------------

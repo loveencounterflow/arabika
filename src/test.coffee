@@ -1,4 +1,6 @@
 
+
+
 ############################################################################################################
 # njs_util                  = require 'util'
 njs_path                  = require 'path'
@@ -15,23 +17,22 @@ debug                     = TRM.get_logger 'debug',     badge
 warn                      = TRM.get_logger 'warn',      badge
 help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
-rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
-@_new                     = require './new'
-@_loader                  = require './grammar-loader'
-MULTIMIX                  = require 'coffeenode-multimix'
+### https://github.com/isaacs/node-glob ###
+GLOB                      = require 'glob'
 
 
+#-----------------------------------------------------------------------------------------------------------
+### find all files that start with a digit other than 0: ###
+glob            = njs_path.join __dirname, '*'
+routes          = ( route for route in GLOB.sync glob when /^[1-9]/.test njs_path.basename route )
 
-############################################################################################################
-route_infos     = @_loader.get_route_infos()
-for route_info in route_infos
-  { route
-    name
-    nr    }   = route_info
-  throw new Error "duplicate module #{route}:\nname #{rpr name} already in use" if @[ name ]?
-  module      = require route
-  @[ name ]   = MULTIMIX.bundle module
+### sort routes numerically: ###
+routes.sort ( a, b ) ->
+  a = parseInt ( a.replace /\/([0-9])[^\/]+/g, '$1' ), 10
+  b = parseInt ( b.replace /\/([0-9])[^\/]+/g, '$1' ), 10
+  return +1 if a > b
+  return -1 if a < b
+  return  0
 
-# module.exports  = MULTIMIX.assemble @, modules...
 

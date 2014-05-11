@@ -18,11 +18,10 @@ echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
 π                         = require 'coffeenode-packrattle'
-WS                        = require './3-whitespace'
-NUM                       = require './4-numbers'
-A                         = require './main'
+WS                        = require './3-ws'
+NUMBER                    = require './4-number'
+NEW                       = require './new'
 
-# info name for name of A
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -34,7 +33,7 @@ A                         = require './main'
   operator  = match[ 1 ][ 1 ]
   right     = match[ 2 ]
   # whisper [ left, operator, right ]
-  return A.new.binary_expression operator, left, right
+  return NEW.binary_expression operator, left, right
   # return [ match[ 1 ][ 0 ], match[ 1 ][ 1 ], match[ 0 ], match[ 2 ], ]
 
 #-----------------------------------------------------------------------------------------------------------
@@ -54,8 +53,8 @@ not possible:
 @multiplication  = ( π.seq ( => @expression ), WS.ilws, @times, WS.ilws, ( => @expression ) )
   .onMatch @_operation_on_match.bind @
 
-@sum             = π.alt @addition, NUM.digits
-@product         = π.alt @multiplication, NUM.digits
+@sum             = π.alt @addition, NUMBER.digits
+@product         = π.alt @multiplication, NUMBER.digits
 @expression      = ( π.alt @sum, @product )
   .onMatch ( match ) => [ 'expression', match, ]
 
