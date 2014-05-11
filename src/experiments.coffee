@@ -145,3 +145,61 @@ debug '\n' + @as_coffeescript node
 
 # info ESCODEGEN.generate node
 # info ESPRIMA.parse 'var a = "3 + 4"'
+
+new_tsort_graph = require 'tsort'
+
+# create an empty graph
+g = new_tsort_graph()
+
+# add nodes
+g.add "a", "b"
+g.add "b", "c"
+g.add "0", "a"
+
+# outputs: [ '0', 'a', 'b', 'c' ]
+info g.sort()
+
+# can add more than one node
+g.add "1", "2", "3", "a"
+
+# outputs: [ '0', '1', '2', '3', 'a', 'b', 'c' ]
+info g
+info g.sort()
+info g
+
+# can add in array form
+g.add [
+  "1"
+  "1.5"
+]
+g.add [
+  "1.5"
+  "a"
+]
+
+# outputs: [ '0', '1', '2', '3', '1.5', 'a', 'b', 'c' ]
+info g.sort()
+
+# detects cycles
+g.add "first", "second"
+g.add "second", "third"
+g.sort()
+g.add "third", "first"
+offender = g[ 'nodes' ][ 'first' ]
+for element, idx in offender
+  offender[ idx ] += '%' if element is 'third'
+  g[ 'nodes' ][ 'third%' ] = []
+debug g
+try
+  info g.sort()
+catch error
+  throw error unless /^There is a cycle in the graph/.test error[ 'message' ]
+  warn g
+
+
+
+# debug name for name of π.alt ->
+
+
+
+
