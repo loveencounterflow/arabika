@@ -20,7 +20,7 @@ rainbow                   = TRM.rainbow.bind TRM
 π                         = require 'coffeenode-packrattle'
 WS                        = require './3-ws'
 NUMBER                    = require './4-number'
-NEW                       = require './new'
+NEW                       = require './NEW'
 
 
 

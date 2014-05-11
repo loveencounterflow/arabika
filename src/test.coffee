@@ -18,21 +18,39 @@ warn                      = TRM.get_logger 'warn',      badge
 help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
-### https://github.com/isaacs/node-glob ###
-GLOB                      = require 'glob'
+NEW                       = require './NEW'
+LOADER                    = require './grammar-loader'
 
 
 #-----------------------------------------------------------------------------------------------------------
-### find all files that start with a digit other than 0: ###
-glob            = njs_path.join __dirname, '*'
-routes          = ( route for route in GLOB.sync glob when /^[1-9]/.test njs_path.basename route )
+@main = ->
+  route_infos = LOADER.get_route_infos()
+  #.........................................................................................................
+  for route_info in route_infos
+    { route
+      name
+      nr    }   = route_info
+    module = require route
+    #.......................................................................................................
+    unless ( TESTS = module[ 'TESTS' ] )?
+      warn "no tests found for #{name} (#{route})"
+      continue
+    #.......................................................................................................
+    whisper "testing #{name} (#{route}"
+    for name of TESTS
+      continue if name[ 0 ] is '_'
+      try
+        TESTS[ name ].apply module
+      catch error
+        warn "  #{TRM.grey name}: #{TRM.red error[ 'message' ]}"
+        continue
+      log "  #{TRM.grey name}: #{TRM.green 'ok'}"
+  #.........................................................................................................
+  return null
 
-### sort routes numerically: ###
-routes.sort ( a, b ) ->
-  a = parseInt ( a.replace /\/([0-9])[^\/]+/g, '$1' ), 10
-  b = parseInt ( b.replace /\/([0-9])[^\/]+/g, '$1' ), 10
-  return +1 if a > b
-  return -1 if a < b
-  return  0
+
+
+############################################################################################################
+@main() unless module.parent?
 
 

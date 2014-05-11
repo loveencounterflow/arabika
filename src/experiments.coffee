@@ -122,9 +122,9 @@ info rpr A.TEXT._nosq.run          'abcdef'
 info rpr A.TEXT._nodq.run          'ioxuy'
 info rpr A.TEXT._dq_text_literal.run '"foo"'
 info rpr A.TEXT._sq_text_literal.run "'foo'"
-info rpr node = A.TEXT.text_literal.run  '"helo"'
+info rpr node = A.TEXT.literal.run  '"helo"'
 debug '\n' + @as_coffeescript node
-info rpr node = A.TEXT.text_literal.run  "'helo'"
+info rpr node = A.TEXT.literal.run  "'helo'"
 debug '\n' + @as_coffeescript node
 
 

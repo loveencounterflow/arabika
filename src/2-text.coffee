@@ -18,7 +18,7 @@ echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
 π                         = require 'coffeenode-packrattle'
-NEW                       = require './new'
+NEW                       = require './NEW'
 
 #-----------------------------------------------------------------------------------------------------------
 @_single_quote    = π.string "'"
@@ -32,7 +32,7 @@ NEW                       = require './new'
 @_sq_text_literal = π.seq @_single_quote, @_nosq, @_single_quote
 @_dq_text_literal = π.seq @_double_quote, @_nodq, @_double_quote
 ### TAINT maybe we should *not* un-escape anything; better for translation ###
-@text_literal     = ( π.alt @_sq_text_literal, @_dq_text_literal )
+@literal          = ( π.alt @_sq_text_literal, @_dq_text_literal )
   .onMatch ( match ) =>
     [ ignore, value, ignore, ] = match
     return NEW.literal ( match.join '' ), value

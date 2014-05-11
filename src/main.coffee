@@ -17,7 +17,7 @@ help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
-@_new                     = require './new'
+@_new                     = require './NEW'
 @_loader                  = require './grammar-loader'
 MULTIMIX                  = require 'coffeenode-multimix'
 

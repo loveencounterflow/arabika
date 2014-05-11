@@ -3,6 +3,16 @@
 ############################################################################################################
 MULTIMIX                  = require 'coffeenode-multimix'
 
+#-----------------------------------------------------------------------------------------------------------
+@test = ->
+  assert = require 'assert'
+  #.........................................................................................................
+  R =
+    ### TAINT `assert.deepEqual` is broken as of https://github.com/joyent/node/issues/7161 ###
+    eq:     assert.deepEqual.bind assert
+    throws: assert.throws.bind    assert
+  #.........................................................................................................
+  return R
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -18,8 +28,8 @@ MULTIMIX                  = require 'coffeenode-multimix'
 @literal = ( raw, value ) ->
   R =
     type:     'Literal'
-    value:    value
     raw:      raw
+    value:    value
   return R
 
 
