@@ -105,15 +105,22 @@ NEW                       = require './NEW'
     sigil   = @_constants[ 'symbol-sigil' ]
     keyword = @_constants[ 'use-keyword' ]
     probes_and_results = [
-      [ "use #{sigil}x",      NEW.x_use_statement keyword, "#{sigil}x",   "x" ]
-      [ "use #{sigil}foo",    NEW.x_use_statement keyword, "#{sigil}foo", "foo" ]
-      [ "use 12349876",       NEW.x_use_statement keyword, "12349876", "12349876" ]
-      [ "use 'some text'",    NEW.x_use_statement keyword, "'some text'", "some text" ]
-      [ 'use "other text"' ,  NEW.x_use_statement keyword, '"other text"', 'other text' ]
+      [ "use #{sigil}x",      """/* use ':x' */"""            ]
+      [ "use #{sigil}foo",    """/* use ':foo' */"""          ]
+      [ "use 12349876",       """/* use '12349876' */"""      ]
+      [ "use 'some text'",    """/* use '\\'some text\\'' */""" ]
+      [ 'use "other text"' ,  """/* use '"other text"' */"""  ]
       ]
     #.......................................................................................................
     for [ probe, result, ] in probes_and_results
-      info ( @use_statement.run probe )
-      info ( test.as_js @use_statement.run probe )
-    info test.as_js NUMBER.integer.run '123'
+      test.eq ( test.as_js @use_statement.run probe ), result
+
+
+
+
+
+
+
+
+
 

@@ -61,5 +61,22 @@ NEW                       = require './NEW'
     for probe in """0 12 7 1928374 080""".split /\s+/
       test.eq ( @integer.run probe ), ( NEW.literal 'integer', probe, parseInt probe, 10 )
 
+  #---------------------------------------------------------------------------------------------------------
+  'number: recognizes integers': ( test ) ->
+    for probe in """0 12 7 1928374 080""".split /\s+/
+      test.eq ( @number.run probe ), ( NEW.literal 'integer', probe, parseInt probe, 10 )
+
+  #---------------------------------------------------------------------------------------------------------
+  'number: compiles integers to JS': ( test ) ->
+    probes_and_results = [
+      ['0',                           '0' ]
+      ['000',                         '0' ]
+      ['123',                         '123' ]
+      ['00000123',                    '123' ]
+      ['123456789123456789123456789', '1.2345678912345679e+26' ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      test.eq ( test.as_js @number.run probe ), result
+
 
 

@@ -35,30 +35,30 @@ module.exports =
       parentheses:        yes
       # Preserve semicolons at the end of blocks and programs. Default is true.
       semicolons:         yes
-      # Mozilla Parser API compatible parse function. If it is provided, generator tries to use the 'raw'
-      # representation. See esprima raw information. Default is null.
-      parse:              null
-      # If comments are attached to AST, escodegen is going to emit comments to output code. Default is false.
-      comment:            no
-      # sourceMap is the source maps's source filename, that's a name that will show up in the browser
-      # debugger for the generated source (if source-maps is enabled). If a non-empty string value is
-      # provided, generate a source map. If sourceMapWithCode is true generator returns output hash, where
-      # output.map is a source-map representation, which can be serialized as output.map.toString().
-      # output.code is a string with generated JS code (note that it's not going to have
-      # //@ sourceMappingURL comment in it). Optionally option.sourceContent string can be passed (which
-      # represents original source of the file, for example it could be a source of coffeescript from which
-      # JS is being generated), if provided generated source map will have original source embedded in it.
-      # Optionally option.sourceMapRoot can be provided, in which case option.sourceMap will be treated as
-      # relative to it. For more information about source map itself, see source map library document, V3
-      # draft and HTML5Rocks introduction. Default is undefined. sourceMapRoot is the source root for the
-      # source map (see the Mozilla documentation). If sourceMapWithCode is truthy, an object is returned from
-      # generate() of the form: { code: .. , map: .. }.
-      sourceMap:          undefined
-      sourceMapRoot:      undefined
-      sourceMapWithCode:  undefined
-      sourceContent:      undefined
-      # Recognize DirectiveStatement and distinguish it from ExpressionStatement
-      directive:          no
-      verbatim:           'x-verbatim'
+    # Mozilla Parser API compatible parse function. If it is provided, generator tries to use the 'raw'
+    # representation. See esprima raw information. Default is null.
+    parse:              null
+    # If comments are attached to AST, escodegen is going to emit comments to output code. Default is false.
+    comment:            no
+    # sourceMap is the source maps's source filename, that's a name that will show up in the browser
+    # debugger for the generated source (if source-maps is enabled). If a non-empty string value is
+    # provided, generate a source map. If sourceMapWithCode is true generator returns output hash, where
+    # output.map is a source-map representation, which can be serialized as output.map.toString().
+    # output.code is a string with generated JS code (note that it's not going to have
+    # //@ sourceMappingURL comment in it). Optionally option.sourceContent string can be passed (which
+    # represents original source of the file, for example it could be a source of coffeescript from which
+    # JS is being generated), if provided generated source map will have original source embedded in it.
+    # Optionally option.sourceMapRoot can be provided, in which case option.sourceMap will be treated as
+    # relative to it. For more information about source map itself, see source map library document, V3
+    # draft and HTML5Rocks introduction. Default is undefined. sourceMapRoot is the source root for the
+    # source map (see the Mozilla documentation). If sourceMapWithCode is truthy, an object is returned from
+    # generate() of the form: { code: .. , map: .. }.
+    sourceMap:          undefined
+    sourceMapRoot:      undefined
+    sourceMapWithCode:  undefined
+    sourceContent:      undefined
+    # Recognize DirectiveStatement and distinguish it from ExpressionStatement
+    directive:          no
+    verbatim:           'x-verbatim'
 
 

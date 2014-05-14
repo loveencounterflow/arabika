@@ -17,16 +17,16 @@
         escapeless: false,
         compact: false,
         parentheses: true,
-        semicolons: true,
-        parse: null,
-        comment: false,
-        sourceMap: void 0,
-        sourceMapRoot: void 0,
-        sourceMapWithCode: void 0,
-        sourceContent: void 0,
-        directive: false,
-        verbatim: 'x-verbatim'
-      }
+        semicolons: true
+      },
+      parse: null,
+      comment: false,
+      sourceMap: void 0,
+      sourceMapRoot: void 0,
+      sourceMapWithCode: void 0,
+      sourceContent: void 0,
+      directive: false,
+      verbatim: 'x-verbatim'
     }
   };
 

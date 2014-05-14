@@ -26,7 +26,6 @@ assert                    = require 'assert'
 BNP                       = require 'coffeenode-bitsnpieces'
 ESCODEGEN                 = require 'escodegen'
 escodegen_options         = ( require '../options' )[ 'escodegen' ]
-warn escodegen_options
 
 #-----------------------------------------------------------------------------------------------------------
 @test =
