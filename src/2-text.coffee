@@ -35,7 +35,7 @@ NEW                       = require './NEW'
 @literal          = ( π.alt @_sq_text_literal, @_dq_text_literal )
   .onMatch ( match ) =>
     [ ignore, value, ignore, ] = match
-    return NEW.literal ( match.join '' ), value
+    return NEW.literal 'text', ( match.join '' ), value
 
 
 #-----------------------------------------------------------------------------------------------------------
