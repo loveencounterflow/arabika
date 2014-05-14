@@ -46,7 +46,7 @@ MULTIMIX                  = require 'coffeenode-multimix'
 #-----------------------------------------------------------------------------------------------------------
 @x_comment = ( text, subtype = 'comment' ) ->
   verbatim = '/* ' + ( text.replace /\/\*/g, '/ *' ) + ' */'
-  return @literal subtype, null, null, verbatim
+  return @literal subtype, 'xxx', 'xxx', verbatim
 
 #-----------------------------------------------------------------------------------------------------------
 @x_use_statement = ( keyword, argument ) ->

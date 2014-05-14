@@ -24,6 +24,9 @@ LOADER                    = require './grammar-loader'
 assert                    = require 'assert'
 #...........................................................................................................
 BNP                       = require 'coffeenode-bitsnpieces'
+ESCODEGEN                 = require 'escodegen'
+escodegen_options         = ( require '../options' )[ 'escodegen' ]
+warn escodegen_options
 
 #-----------------------------------------------------------------------------------------------------------
 @test =
@@ -37,6 +40,10 @@ BNP                       = require 'coffeenode-bitsnpieces'
   eq: ( P... ) =>
     ### `assert.deepEqual` is broken as of https://github.com/joyent/node/issues/7161 ###
     throw new Error "not equal: \n#{( rpr p for p in P ).join '\n'}" unless BNP.equals P...
+
+  #---------------------------------------------------------------------------------------------------------
+  as_js: ( node ) =>
+    return ESCODEGEN.generate node, escodegen_options
 
   #---------------------------------------------------------------------------------------------------------
   throws: assert.throws.bind assert
