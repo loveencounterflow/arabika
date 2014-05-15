@@ -33,7 +33,8 @@ NEW                       = require './NEW'
     return match
 
 #-----------------------------------------------------------------------------------------------------------
-@number = π.alt @integer
+@literal = π.alt @integer
+
 
 
 #===========================================================================================================
@@ -64,7 +65,7 @@ NEW                       = require './NEW'
   #---------------------------------------------------------------------------------------------------------
   'number: recognizes integers': ( test ) ->
     for probe in """0 12 7 1928374 080""".split /\s+/
-      test.eq ( @number.run probe ), ( NEW.literal 'integer', probe, parseInt probe, 10 )
+      test.eq ( @literal.run probe ), ( NEW.literal 'integer', probe, parseInt probe, 10 )
 
   #---------------------------------------------------------------------------------------------------------
   'number: compiles integers to JS': ( test ) ->
@@ -76,7 +77,7 @@ NEW                       = require './NEW'
       ['123456789123456789123456789', '1.2345678912345679e+26' ]
       ]
     for [ probe, result, ] in probes_and_results
-      test.eq ( test.as_js @number.run probe ), result
+      test.eq ( test.as_js @literal.run probe ), result
 
 
 

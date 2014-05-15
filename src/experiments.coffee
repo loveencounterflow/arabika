@@ -2,7 +2,7 @@
 ############################################################################################################
 # njs_util                  = require 'util'
 # njs_path                  = require 'path'
-# njs_fs                    = require 'fs'
+njs_fs                    = require 'fs'
 #...........................................................................................................
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
@@ -91,56 +91,60 @@ Point (2) is not possible with a `switch`-dispatcher.
 
 
 ############################################################################################################
-node = A.UNSORTED.assignment.run 'xy: 20 + 3'
-info @as_coffeescript node
-node = A.UNSORTED.assignment.run 'foo/bar: 20 + 3'
-info @as_coffeescript node
-# node = A.UNSORTED.assignment.run 'foo/bar: gnu/cram'
-# info @as_coffeescript node
+
+f = ->
+  node = A.UNSORTED.assignment.run 'xy: 20 + 3'
+  info @as_coffeescript node
+  node = A.UNSORTED.assignment.run 'foo/bar: 20 + 3'
+  info @as_coffeescript node
+  # node = A.UNSORTED.assignment.run 'foo/bar: gnu/cram'
+  # info @as_coffeescript node
 
 
 
-info '\n' + rpr A.UNSORTED.list.run '[ 3, 10, 200 ]'
-info '\n' + rpr A.UNSORTED.list.run '[]'
+  info '\n' + rpr A.UNSORTED.list.run '[ 3, 10, 200 ]'
+  info '\n' + rpr A.UNSORTED.list.run '[]'
 
-info '\n' + rpr A.UNSORTED.assignment.run 'xy: 20 + 3'
+  info '\n' + rpr A.UNSORTED.assignment.run 'xy: 20 + 3'
 
-info '\n' + rpr A.UNSORTED.expression.run '3 + 10 + 200'
-info '\n' + rpr A.UNSORTED.expression.run '3 * 10 + 200'
-info '\n' + rpr A.UNSORTED.expression.run '3 + 10 * 200'
-info '\n' + rpr A.UNSORTED.expression.run '42'
-
-
-info rpr A.TEXT._single_quote.run  "'"
-info rpr A.TEXT._double_quote.run  '"'
-info rpr A.TEXT._chr_escaper.run   '\\'
-info rpr A.TEXT.simple_escape.run 'n'
-info rpr A.TEXT._unicode_hex.run   'u4e01'
-info rpr A.TEXT._escaped.run       '\\u4e01'
-info rpr A.TEXT._escaped.run       '\\n'
-info rpr A.TEXT._nosq.run          'abcdef'
-info rpr A.TEXT._nodq.run          'ioxuy'
-info rpr A.TEXT._dq_text_literal.run '"foo"'
-info rpr A.TEXT._sq_text_literal.run "'foo'"
-info rpr node = A.TEXT.literal.run  '"helo"'
-debug '\n' + @as_coffeescript node
-info rpr node = A.TEXT.literal.run  "'helo'"
-debug '\n' + @as_coffeescript node
+  info '\n' + rpr A.UNSORTED.expression.run '3 + 10 + 200'
+  info '\n' + rpr A.UNSORTED.expression.run '3 * 10 + 200'
+  info '\n' + rpr A.UNSORTED.expression.run '3 + 10 * 200'
+  info '\n' + rpr A.UNSORTED.expression.run '42'
 
 
-info node = A.BASE.use_statement.run 'use 123'
-debug '\n' + @as_coffeescript node
-info node = A.BASE.use_statement.run 'use :foo'
-debug '\n' + @as_coffeescript node
-info node = A.BASE.use_statement.run 'use "foo\nbar"'
-debug '\n' + @as_coffeescript node
+  info rpr A.TEXT._single_quote.run  "'"
+  info rpr A.TEXT._double_quote.run  '"'
+  info rpr A.TEXT._chr_escaper.run   '\\'
+  info rpr A.TEXT.simple_escape.run 'n'
+  info rpr A.TEXT._unicode_hex.run   'u4e01'
+  info rpr A.TEXT._escaped.run       '\\u4e01'
+  info rpr A.TEXT._escaped.run       '\\n'
+  info rpr A.TEXT._nosq.run          'abcdef'
+  info rpr A.TEXT._nodq.run          'ioxuy'
+  info rpr A.TEXT._dq_text_literal.run '"foo"'
+  info rpr A.TEXT._sq_text_literal.run "'foo'"
+  info rpr node = A.TEXT.literal.run  '"helo"'
+  debug '\n' + @as_coffeescript node
+  info rpr node = A.TEXT.literal.run  "'helo'"
+  debug '\n' + @as_coffeescript node
 
-# ESPRIMA                   = require 'esprima'
-# ESCODEGEN                 = require 'escodegen'
+
+  info node = A.BASE.use_statement.run 'use 123'
+  debug '\n' + @as_coffeescript node
+  info node = A.BASE.use_statement.run 'use :foo'
+  debug '\n' + @as_coffeescript node
+  info node = A.BASE.use_statement.run 'use "foo\nbar"'
+  debug '\n' + @as_coffeescript node
+
+  # ESPRIMA                   = require 'esprima'
+  # ESCODEGEN                 = require 'escodegen'
 
 
-# node = A.new.binary_expression '+', ( A.new.literal '3', 3 ), ( A.new.literal '4', 4 )
+  # node = A.new.binary_expression '+', ( A.new.literal '3', 3 ), ( A.new.literal '4', 4 )
 
-# info ESCODEGEN.generate node
-# info ESPRIMA.parse 'var a = "3 + 4"'
+  # info ESCODEGEN.generate node
+  # info ESPRIMA.parse 'var a = "3 + 4"'
 
+rv = π.consume A.TEXT.literal, '"+n"', debugGraph: true
+njs_fs.writeFileSync '/tmp/test2.dot', rv.state.debugGraphToDot()

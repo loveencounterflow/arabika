@@ -59,8 +59,6 @@ not possible:
   .onMatch ( match ) => [ 'expression', match, ]
 
 
-# rv = π.consume expression, '3 + 10 * 200', debugGraph: true
-# njs_fs.writeFileSync '/tmp/test.dot', rv.state.debugGraphToDot()
 
 
 @list_kernel = ( π.repeatSeparated ( => @expression ), π [ ',', WS.ilws, ] )

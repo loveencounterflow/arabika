@@ -46,12 +46,12 @@ NEW                       = require './NEW'
 @_double_quote = π.alt => π.string @_constants[ 'double-quote' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@_nosq = ( π.alt ( => @_escaped ), ( => /// [^ #{BNP.escape_regex @_constants[ 'single-quote' ]} ]+ /// ) )
-  .onMatch ( match ) -> match[ 0 ]
+@_nosq = ( π.repeat => π.alt @_escaped, /// [^ #{BNP.escape_regex @_constants[ 'single-quote' ]} ] /// )
+  .onMatch ( match ) -> ( submatch[ 0 ] for submatch in match ).join ''
 
 #-----------------------------------------------------------------------------------------------------------
-@_nodq = ( π.alt ( => @_escaped ), ( => /// [^ #{BNP.escape_regex @_constants[ 'double-quote' ]} ]+ /// ) )
-  .onMatch ( match ) -> match[ 0 ]
+@_nodq = ( π.repeat => π.alt @_escaped, /// [^ #{BNP.escape_regex @_constants[ 'double-quote' ]} ] /// )
+  .onMatch ( match ) -> ( submatch[ 0 ] for submatch in match ).join ''
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `π.alt` is an expedient here ###
@@ -124,16 +124,17 @@ NEW                       = require './NEW'
       [ "#{escaper}r",         '\r' ]
       [ "#{escaper}t",         '\t' ] ]
     for [ probe, result, ] in probes_and_results
-      debug rpr @_escaped.run probe
       test.eq ( @_escaped.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
   '_nosq: accepts runs of chracters except unescaped single quote': ( test ) ->
+    escaper = @_constants[ 'chr-escaper' ]
     probes_and_results = [
       [ '0',                  '0' ]
       [ 'qwertz',             'qwertz' ]
       # [ "qw+'ertz",          "qw'ertz" ]
-      [ "qw+nertz",          "qw\nertz" ]
+      [ "#{escaper}t",        "\t" ]
+      [ "qw#{escaper}nertz",  "qw\nertz" ]
       [ '中華人"民共和國"',    　'中華人"民共和國"' ] ]
     for [ probe, result, ] in probes_and_results
       # debug @_nosq.run probe
