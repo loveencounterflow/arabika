@@ -14,36 +14,38 @@ help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
 π                         = require 'coffeenode-packrattle'
+NEW                       = require './NEW'
 WS                        = require './3-ws'
 NUMBER                    = require './4-number'
 TEXT                      = require './2-text'
-NEW                       = require './NEW'
+CHR                       = require './8-character'
+XRE                       = require './9-xre'
 
 
 #-----------------------------------------------------------------------------------------------------------
-@_constants =
+@$ =
   'symbol-sigil':   ':'
   'use-keyword':    'use'
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `π.alt` is an expedient here ###
-@_symbol_sigil    = π.alt => π.string @_constants[ 'symbol-sigil' ]
+@$_symbol_sigil    = π.alt => π.string @$[ 'symbol-sigil' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@symbol           = ( π.seq @_symbol_sigil, WS.nws )
+@symbol           = ( π.seq @$_symbol_sigil, WS.nws )
   .onMatch ( match ) =>
     [ sigil, { raw, value } ] = match
     return NEW.literal 'symbol', sigil + raw, value
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `π.alt` is an expedient here ###
-@_use_keyword     = π.alt => π.string @_constants[ 'use-keyword' ]
+@$_use_keyword     = π.alt => π.string @$[ 'use-keyword' ]
 
 #-----------------------------------------------------------------------------------------------------------
 @use_argument     = π.alt @symbol, NUMBER.digits, TEXT.literal
 
 #-----------------------------------------------------------------------------------------------------------
-@use_statement    = ( π.seq @_use_keyword, WS.ilws, @use_argument )
+@use_statement    = ( π.seq @$_use_keyword, WS.ilws, @use_argument )
   .onMatch ( match ) =>
     [ keyword, { raw, value } ] = match
     return NEW.x_use_statement keyword, raw
@@ -57,12 +59,12 @@ NEW                       = require './NEW'
   #---------------------------------------------------------------------------------------------------------
   '_symbol_sigil: is a single character': ( test ) ->
     TYPES = require 'coffeenode-types'
-    test.ok TYPES.isa_text @_constants[ 'symbol-sigil' ]
-    test.ok @_constants[ 'symbol-sigil' ].length is 1
+    test.ok TYPES.isa_text @$[ 'symbol-sigil' ]
+    test.ok @$[ 'symbol-sigil' ].length is 1
 
   #---------------------------------------------------------------------------------------------------------
   'symbol: accepts sequences of [ symbol-sigil, nws ]': ( test ) ->
-    sigil = @_constants[ 'symbol-sigil' ]
+    sigil = @$[ 'symbol-sigil' ]
     probes = [
       "#{sigil}x"
       "#{sigil}foo"
@@ -73,7 +75,7 @@ NEW                       = require './NEW'
 
   #---------------------------------------------------------------------------------------------------------
   'use_argument: accepts symbols, digits, strings': ( test ) ->
-    sigil = @_constants[ 'symbol-sigil' ]
+    sigil = @$[ 'symbol-sigil' ]
     probes_and_results = [
       [ "#{sigil}x",      NEW.literal 'symbol', "#{sigil}x",   "x" ]
       [ "#{sigil}foo",    NEW.literal 'symbol', "#{sigil}foo", "foo" ]
@@ -87,8 +89,8 @@ NEW                       = require './NEW'
 
   #---------------------------------------------------------------------------------------------------------
   'use_statement: accepts symbols, digits, strings': ( test ) ->
-    sigil   = @_constants[ 'symbol-sigil' ]
-    keyword = @_constants[ 'use-keyword' ]
+    sigil   = @$[ 'symbol-sigil' ]
+    keyword = @$[ 'use-keyword' ]
     probes_and_results = [
       [ "use #{sigil}x",      NEW.x_use_statement keyword, "#{sigil}x",   "x" ]
       [ "use #{sigil}foo",    NEW.x_use_statement keyword, "#{sigil}foo", "foo" ]
@@ -102,8 +104,8 @@ NEW                       = require './NEW'
 
   #---------------------------------------------------------------------------------------------------------
   'use_statement: compilation to JS': ( test ) ->
-    sigil   = @_constants[ 'symbol-sigil' ]
-    keyword = @_constants[ 'use-keyword' ]
+    sigil   = @$[ 'symbol-sigil' ]
+    keyword = @$[ 'use-keyword' ]
     probes_and_results = [
       [ "use #{sigil}x",      """/* use ':x' */"""            ]
       [ "use #{sigil}foo",    """/* use ':foo' */"""          ]

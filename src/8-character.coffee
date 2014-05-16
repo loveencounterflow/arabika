@@ -51,6 +51,16 @@ XRE                       = require './9-xre'
 #-----------------------------------------------------------------------------------------------------------
 @$_constants =
   'ascii-punctuation':  """-!"#%&'()*,./:;?@[\\]_{}"""
+  ### Sigils may start and classify simple names: ###
+  'sigils':
+    # '@':        'attribute' # ??? used for `this`
+    '.':        'hidden'
+    '_':        'private'
+    # '$':        'special' # used for interpolation!
+    '%':        'cached'
+    '!':        'attention'
+    # '°':        ''
+    # '^':        ''
 
 
 #-----------------------------------------------------------------------------------------------------------

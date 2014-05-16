@@ -48,6 +48,13 @@ MULTIMIX                  = require 'coffeenode-multimix'
   verbatim = '/* ' + ( text.replace /\/\*/g, '/ *' ) + ' */'
   return @literal subtype, 'xxx', 'xxx', verbatim
 
+# #-----------------------------------------------------------------------------------------------------------
+# @x_indentation = ( text, level ) ->
+#   ### TAINT make annotation of indentation an option ###
+#   verbatim = "/* indentation level #{level} */"
+#   R = @literal subtype, 'xxx', 'xxx', verbatim
+#   R[ 'x-level' ] = level
+
 #-----------------------------------------------------------------------------------------------------------
 @x_use_statement = ( keyword, argument ) ->
   text = "#{keyword} #{rpr argument}"

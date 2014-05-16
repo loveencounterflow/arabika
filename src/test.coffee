@@ -36,6 +36,10 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
     throw new Error "expected true, got\n#{rpr result}" unless result is true
 
   #---------------------------------------------------------------------------------------------------------
+  fail: ( message ) =>
+    throw new Error message
+
+  #---------------------------------------------------------------------------------------------------------
   eq: ( P... ) =>
     ### `assert.deepEqual` is broken as of https://github.com/joyent/node/issues/7161 ###
     throw new Error "not equal: \n#{( rpr p for p in P ).join '\n'}" unless BNP.equals P...

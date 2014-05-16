@@ -74,7 +74,8 @@ extension_u =
 XRegExp.addToken extension_u.matcher, extension_u.handler, extension_u.options
 
 #-----------------------------------------------------------------------------------------------------------
-### Add the Q flag that makes the dot match all code units ###
+### Add the Q flag that makes the dot match all code units;
+see http://www.regular-expressions.info/dot.html ###
 XRegExp.addToken /\./,
   ( match, scope, flags ) ->
     dot = if /s/.test flags then '[\\s\\S]' else '.'
