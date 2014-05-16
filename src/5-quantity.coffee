@@ -6,7 +6,7 @@
 #...........................................................................................................
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾number﴿'
+badge                     = '﴾5-quantity﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge
@@ -23,15 +23,15 @@ NEW                       = require './NEW'
 
 
 #-----------------------------------------------------------------------------------------------------------
-@quantity = π.seq @NUMBER.literal, @unit
+# @quantity = π.seq @NUMBER.literal, @unit
 
 
 #===========================================================================================================
 # TESTS
 #-----------------------------------------------------------------------------------------------------------
-@TESTS =
+# @TESTS =
 
-  #---------------------------------------------------------------------------------------------------------
-  'digits: parses sequences of ASCII digits': ( test ) ->
-    for probe in """0 12 7 1928374 080""".split /\s+/
-      test.eq ( @digits.run probe ), ( NEW.literal 'digits', probe, probe )
+#   #---------------------------------------------------------------------------------------------------------
+#   'digits: parses sequences of ASCII digits': ( test ) ->
+#     for probe in """0 12 7 1928374 080""".split /\s+/
+#       test.eq ( @digits.run probe ), ( NEW.literal 'digits', probe, probe )

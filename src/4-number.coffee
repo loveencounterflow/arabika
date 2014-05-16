@@ -6,7 +6,7 @@
 #...........................................................................................................
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾number﴿'
+badge                     = '﴾4-number﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge

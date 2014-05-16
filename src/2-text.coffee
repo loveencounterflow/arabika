@@ -6,7 +6,7 @@
 #...........................................................................................................
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾1﴿'
+badge                     = '﴾2-text﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge
@@ -20,10 +20,11 @@ rainbow                   = TRM.rainbow.bind TRM
 π                         = require 'coffeenode-packrattle'
 BNP                       = require 'coffeenode-bitsnpieces'
 NEW                       = require './NEW'
-
+CHR                       = require './8-character'
+XRE                       = require './9-xre'
 
 #-----------------------------------------------------------------------------------------------------------
-@_constants =
+@$_constants =
   'single-quote':     "'"
   'double-quote':     '"'
   # 'chr-escaper':      '\\'
@@ -39,51 +40,53 @@ NEW                       = require './NEW'
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `π.alt` is an expedient here ###
-@_single_quote = π.alt => π.string @_constants[ 'single-quote' ]
+@$_sq = π.alt => π.string @$_constants[ 'single-quote' ]
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `π.alt` is an expedient here ###
-@_double_quote = π.alt => π.string @_constants[ 'double-quote' ]
+@$_dq = π.alt => π.string @$_constants[ 'double-quote' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@_nosq = ( π.repeat => π.alt @_escaped, /// [^ #{BNP.escape_regex @_constants[ 'single-quote' ]} ] /// )
+### TAINT escapes on each call; no memoizing ###
+@$_nosq = ( π.repeat => π.alt @$_escaped, /// [^ #{BNP.escape_regex @$_constants[ 'single-quote' ]} ] /// )
   .onMatch ( match ) -> ( submatch[ 0 ] for submatch in match ).join ''
 
 #-----------------------------------------------------------------------------------------------------------
-@_nodq = ( π.repeat => π.alt @_escaped, /// [^ #{BNP.escape_regex @_constants[ 'double-quote' ]} ] /// )
+### TAINT escapes on each call; no memoizing ###
+@$_nodq = ( π.repeat => π.alt @$_escaped, /// [^ #{BNP.escape_regex @$_constants[ 'double-quote' ]} ] /// )
   .onMatch ( match ) -> ( submatch[ 0 ] for submatch in match ).join ''
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `π.alt` is an expedient here ###
-@_chr_escaper = π.alt => π.string @_constants[ 'chr-escaper' ]
+@$_chr_escaper = π.alt => π.string @$_constants[ 'chr-escaper' ]
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `π.alt` is an expedient here ###
-@_unicode4_metachr = π.alt => π.string @_constants[ 'unicode4-metachr' ]
+@$_unicode4_metachr = π.alt => π.string @$_constants[ 'unicode4-metachr' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@_sq_text_literal = π.seq @_single_quote, @_nosq, @_single_quote
+@$_sq_literal = π.seq @$_sq, @$_nosq, @$_sq
 
 #-----------------------------------------------------------------------------------------------------------
-@_dq_text_literal = π.seq @_double_quote, @_nodq, @_double_quote
+@$_dq_literal = π.seq @$_dq, @$_nodq, @$_dq
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `π.alt` is an expedient here ###
-@_simple_escape = ( π.alt => π.regex /[bfnrt]/ )
-  .onMatch ( match ) => @_constants[ 'escape-table' ][ match[ 0 ] ]
+@$_simple_escape = ( π.alt => π.regex /[bfnrt]/ )
+  .onMatch ( match ) => @$_constants[ 'escape-table' ][ match[ 0 ] ]
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT String conversion method dubious; will fail outside of Unicode BMP ###
-@_unicode_hex = ( π.seq @_unicode4_metachr, /[0-9a-fA-F]{4}/ )
+@$_unicode_hex = ( π.seq @$_unicode4_metachr, /[0-9a-fA-F]{4}/ )
   .onMatch ( match ) => String.fromCharCode '0x' + match[ 1 ]
 
 #-----------------------------------------------------------------------------------------------------------
-@_escaped = ( π.seq @_chr_escaper, ( π.alt @_simple_escape, @_unicode_hex, /./ ) )
+@$_escaped = ( π.seq @$_chr_escaper, ( π.alt @$_simple_escape, @$_unicode_hex, @_chr ) )
   .onMatch ( match ) => match[ 1 ]
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT maybe we should *not* un-escape anything; better for translation ###
-@literal          = ( π.alt @_sq_text_literal, @_dq_text_literal )
+@literal          = ( π.alt @$_sq_literal, @$_dq_literal )
   .onMatch ( match ) =>
     [ ignore, value, ignore, ] = match
     return NEW.literal 'text', ( match.join '' ), value
@@ -97,13 +100,13 @@ NEW                       = require './NEW'
   #---------------------------------------------------------------------------------------------------------
   'quotes are single characters': ( test ) ->
     TYPES = require 'coffeenode-types'
-    test.ok TYPES.isa_text @_constants[ 'single-quote' ]
-    test.ok TYPES.isa_text @_constants[ 'double-quote' ]
-    test.ok @_constants[ 'single-quote' ].length is 1
-    test.ok @_constants[ 'double-quote' ].length is 1
+    test.ok TYPES.isa_text @$_constants[ 'single-quote' ]
+    test.ok TYPES.isa_text @$_constants[ 'double-quote' ]
+    test.ok @$_constants[ 'single-quote' ].length is 1
+    test.ok @$_constants[ 'double-quote' ].length is 1
 
   #---------------------------------------------------------------------------------------------------------
-  '_simple_escape: accepts and translates meta-chracters': ( test ) ->
+  '$simple_escape: accepts and translates meta-chracters': ( test ) ->
     probes_and_results = [
       [ 'b',                  '\b' ]
       [ 'f',                  '\f' ]
@@ -111,11 +114,11 @@ NEW                       = require './NEW'
       [ 'r',                  '\r' ]
       [ 't',                  '\t' ] ]
     for [ probe, result, ] in probes_and_results
-      test.eq ( @_simple_escape.run probe ), result
+      test.eq ( @$_simple_escape.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
-  '_escaped: accepts escaped chracters': ( test ) ->
-    escaper = @_constants[ 'chr-escaper' ]
+  '$escaped: accepts escaped chracters': ( test ) ->
+    escaper = @$_constants[ 'chr-escaper' ]
     probes_and_results = [
       [ '+u4e01',              '丁' ]
       [ "#{escaper}b",         '\b' ]
@@ -124,11 +127,11 @@ NEW                       = require './NEW'
       [ "#{escaper}r",         '\r' ]
       [ "#{escaper}t",         '\t' ] ]
     for [ probe, result, ] in probes_and_results
-      test.eq ( @_escaped.run probe ), result
+      test.eq ( @$_escaped.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
-  '_nosq: accepts runs of chracters except unescaped single quote': ( test ) ->
-    escaper = @_constants[ 'chr-escaper' ]
+  '$nosq: accepts runs of chracters except unescaped single quote': ( test ) ->
+    escaper = @$_constants[ 'chr-escaper' ]
     probes_and_results = [
       [ '0',                  '0' ]
       [ 'qwertz',             'qwertz' ]
@@ -137,25 +140,16 @@ NEW                       = require './NEW'
       [ "qw#{escaper}nertz",  "qw\nertz" ]
       [ '中華人"民共和國"',    　'中華人"民共和國"' ] ]
     for [ probe, result, ] in probes_and_results
-      # debug @_nosq.run probe
-      test.eq ( @_nosq.run probe ), result
+      # debug @$_nosq.run probe
+      test.eq ( @$_nosq.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
-  '_nodq: accepts runs of chracters except unescaped double quote': ( test ) ->
+  '$nodq: accepts runs of chracters except unescaped double quote': ( test ) ->
     probes_and_results = [
       [ '0',                  '0' ]
       [ 'qwertz',             'qwertz' ]
       [ "中華人'民共和國'",     　"中華人'民共和國'" ] ]
     for [ probe, result, ] in probes_and_results
-      test.eq ( @_nodq.run probe ), result
+      test.eq ( @$_nodq.run probe ), result
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'number: compiles integers to JS': ( test ) ->
-  #   probes_and_results = [
-  #     ['0',                           '0' ]
-  #     ['000',                         '0' ]
-  #     ['123',                         '123' ]
-  #     ['00000123',                    '123' ]
-  #     ['123456789123456789123456789', '1.2345678912345679e+26' ]
-  #     ]
 

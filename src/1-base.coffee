@@ -3,7 +3,7 @@
 ############################################################################################################
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾base﴿'
+badge                     = '﴾1-base﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge
