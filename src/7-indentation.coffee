@@ -70,8 +70,8 @@ XRE                       = require './9-xre'
 ### TAINT `π.alt` is an expedient here ###
 @$_indentation =  ( π.repeat ' ' )
   .onMatch ( match ) ->
-    unless match.length / 2 == parseInt match.length / 2
-      throw new Error "inconsistent indentation"
+    # unless match.length / 2 == parseInt match.length / 2
+    #   throw new Error "inconsistent indentation"
     return match.join ''
 
 #-----------------------------------------------------------------------------------------------------------
@@ -161,14 +161,15 @@ debug rpr '\n  '.split d
 debug rpr 'abc'.split d
 
 source = """
-abc
-  def
+    abc
+  abc
+def
   ghi
-    jkl
-      mno
-    pqr
-  xyz
-  """
+  jkl
+    mno
+  pqr
+xyz
+"""
 # debug @$_indented_lines.run source
 # debug rpr @$_indentation.run '    '
 debug rpr @$_indented_material_line.run '  abc'
@@ -176,37 +177,51 @@ debug rpr @$_indented_material_line.run '  abc\n'
 lines = @$_lines.run source
 debug lines
 
+### TAINT we should probably wait with complaints about indentation until later when we can rule out the
+existance of special constructs such as triple-quoted string literals, comments and the like; also, `!use`
+statements may alter the semantics of indentations ###
 R = []
 current_level = -1
 for line, line_idx in lines
   [ indentation, material, ending, ] = line
-  level = indentation.length / 2
+  level = indentation.length # / 2
+  # #.........................................................................................................
+  # unless level is parseInt level
+  #   warn level, current_level
+  #   throw new Error "inconsistent indentation (not an even number of spaces) on line ##{line_idx + 1}:\n#{rpr line}"
+  # #.........................................................................................................
+  # if current_level is null
+  #   unless level is 0
+  #     warn level, current_level
+  #     throw new Error "inconsistent indentation (starts with indentation) on line ##{line_idx + 1}:\n#{rpr line}"
+  # #.........................................................................................................
+  # if level > current_level + 1
+  #   warn level, current_level
+  #   throw new Error "inconsistent indentation (too deep) on line ##{line_idx + 1}:\n#{rpr line}"
   #.........................................................................................................
-  unless level is parseInt level
-    warn level, current_level
-    throw new Error "inconsistent indentation (not an even number of spaces) on line ##{line_idx + 1}:\n#{rpr line}"
+  if level > current_level
+    dents = []
+    while level > current_level
+      current_level += 1
+      dents.push @$_constants[ 'opener' ]
+    R.push dents.join ''
   #.........................................................................................................
-  if current_level is null
-    unless level is 0
-      warn level, current_level
-      throw new Error "inconsistent indentation (starts with indentation) on line ##{line_idx + 1}:\n#{rpr line}"
-  #.........................................................................................................
-  if level > current_level + 1
-    warn level, current_level
-    throw new Error "inconsistent indentation (too deep) on line ##{line_idx + 1}:\n#{rpr line}"
-  #.........................................................................................................
-  while level > current_level
-    current_level += 1
-    R.push @$_constants[ 'opener' ]
-  #.........................................................................................................
-  while current_level > level
-    current_level -= 1
-    R.push @$_constants[ 'closer' ]
-  R.push material
+  else if current_level > level
+    dents = []
+    while current_level > level
+      current_level -= 1
+      dents.push @$_constants[ 'closer' ]
+    R.push dents.join ''
+  R.push '.' + material
+#...........................................................................................................
 ### TAINT code repetition ###
-while current_level > -1
-  current_level -= 1
-  R.push @$_constants[ 'closer' ]
+if current_level > -1
+  dents = []
+  while current_level > -1
+    current_level -= 1
+    dents.push @$_constants[ 'closer' ]
+  R.push dents.join ''
+
 whisper R
 info '\n' + R.join '\n'
 
