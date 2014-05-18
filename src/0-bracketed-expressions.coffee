@@ -50,65 +50,62 @@ XRE                       = require './9-xre'
 #     return R
 
 
-#-----------------------------------------------------------------------------------------------------------
-@expression = ( π.alt @bracketed, @phrases )
 
 #-----------------------------------------------------------------------------------------------------------
+### TAINT move to NEW ###
 @$new = ( options, target ) ->
   options        ?= {}
   options[ name ]?= value for name, value of @$
   R               = target ? {}
   R[ '$' ]        = options
+  R[ '$new' ]     = @$new
   #.........................................................................................................
   for rule_name, get_rule of @$new
-    whisper rule_name
-    R[ rule_name ] = get_rule options
+    # whisper rule_name
+    R[ rule_name ] = get_rule R, options
   #.........................................................................................................
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.bracketed = ( $ ) ->
-  R = ( π.seq $[ 'opener' ], ( π.repeat => @expression ), $[ 'closer' ] )
-    .onMatch ( match ) -> [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
-  #.........................................................................................................
+@$new.bracketed = ( G, $ ) ->
+  R = π.seq $[ 'opener' ], ( π.repeat => G.expression ), $[ 'closer' ]
+  R.onMatch ( match ) -> [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.phrases = ( $ ) ->
-  R = ( π.repeatSeparated @phrase, /// #{XRE.$_esc $[ 'connector' ]} /// )
-    .onMatch ( match ) -> [ 'phrases', match... ]
-  #.........................................................................................................
+@$new.phrases = ( G, $ ) ->
+  R = π.repeatSeparated G.phrase, /// #{XRE.$_esc $[ 'connector' ]} ///
+  R.onMatch ( match ) -> [ 'phrases', match... ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.phrase = ( $ ) ->
+@$new.phrase = ( G, $ ) ->
   metachrs  = XRE.$_esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
-  R         = ( π.regex /// [^ #{metachrs} ]+ /// )
-    .onMatch ( match ) ->
-      R = [ 'phrase', match[ 0 ] ]
-      # whisper R
-      return R
-  #.........................................................................................................
+  R         = π.regex /// [^ #{metachrs} ]+ ///
+  R.onMatch ( match ) -> [ 'phrase', match[ 0 ] ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-do ( self = @ ) ->
-  for name, value of self.$new null, self
-    # self[ name ] = if value.bind? then value.bind self else value
-    self[ name ] = value
+@$new.expression = ( G, $ ) ->
+  return π.alt G.bracketed, G.phrases
+
+#-----------------------------------------------------------------------------------------------------------
+@$new null, @
 
 #-----------------------------------------------------------------------------------------------------------
 @$TESTS =
 
-  #---------------------------------------------------------------------------------------------------------
-  '$new: returns new grammar': ( test ) ->
-    info @$new()
-
   # #---------------------------------------------------------------------------------------------------------
-  # 'bracketed: parses simple bracketed phrase': ( test ) ->
-  #   source  = """(xxx)"""
-  #   # info JSON.stringify @bracketed.run source
-  #   test.eq ( @bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
+  # '$new: returns new grammar': ( test ) ->
+  #   ### TAINT move to NEW ###
+  #   info name for name of @$new()
+
+  #---------------------------------------------------------------------------------------------------------
+  'bracketed: parses simple bracketed phrase': ( test ) ->
+    G       = @$new opener: '(', connector: '|', closer: ')'
+    source  = """(xxx)"""
+    # info JSON.stringify @bracketed.run source
+    test.eq ( G.bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
 
   # #---------------------------------------------------------------------------------------------------------
   # 'bracketed: parses nested bracketed phrase': ( test ) ->

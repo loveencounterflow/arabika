@@ -86,9 +86,9 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
       praise "#{locator}: ok"
   #.........................................................................................................
   info()
-  info    "inspected #{route_count} modules;"
+  info    "Inspected #{route_count} modules;"
   urge    "of these, #{miss_count} modules had no test cases."
-  whisper "Of #{test_count} tests,"
+  info    "Of #{test_count} tests in #{route_count - miss_count} modules,"
   praise  "#{pass_count} tests passed,"
   warn    "and #{fail_count} tests failed."
   #.........................................................................................................
