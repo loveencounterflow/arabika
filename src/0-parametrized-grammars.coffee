@@ -39,6 +39,8 @@ organized fashion. To help consumers identify exactly which rules produce Parser
 is to give all such methods names that start with a lower case Latin letter; all methods and other objects
 that serve other purposes should start with a `$` (dollar sign).
 
+In addition, you can `require` additional module or define helper functions on the module level (as shown
+below with the `translate()` method).
 
 ###
 
@@ -65,164 +67,193 @@ XRE                       = require './9-xre'
 
 
 #-----------------------------------------------------------------------------------------------------------
-### ###
 @$ =
-  'opener':             '⟦'
-  'connector':          '∿'
-  'closer':             '⟧'
-
-
-# #-----------------------------------------------------------------------------------------------------------
-# # @phrase = ( π.alt => whisper 'phrase'; π.regex /// [^ ( | ) ]+ /// )
-# @phrase = ( π.regex /// [^ ( | ) ]+ /// )
-#   .onMatch ( match ) ->
-#     R = [ 'phrase', match[ 0 ] ]
-#     # whisper R
-#     return R
-#   .describe "one or more non-meta characters"
-
-# #-----------------------------------------------------------------------------------------------------------
-# @phrases = ( π.repeatSeparated @phrase, /\|/ )
-#   .onMatch ( match ) ->
-#     # whisper match
-#     return [ 'phrases', match... ]
-
-# #-----------------------------------------------------------------------------------------------------------
-# # @bracketed = ( π.alt => whisper 'bracketed'; π.seq '(', ( π.repeat @expression ), ')' )
-# @bracketed = ( π.seq '(', ( π.repeat => @expression ), ')' )
-#   .onMatch ( match ) ->
-#     R = [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
-#     # whisper R
-#     return R
-
+  ### a RegEx that matches one digit: ###
+  'digit':              /[0123456789]/
+  ### a RegEx that matches one sign (to act as plus and minus): ###
+  'sign':               /[-+]/
+  ### a POD that maps from custom digits to ASCII digits: ###
+  'digits':             null
+  ### a POD that maps from custom signs to ASCII signs: ###
+  'signs':              null
 
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT move to NEW ###
-@$new = ( options, target ) ->
-  options        ?= {}
-  options[ name ]?= value for name, value of @$
-  R               = target ? {}
-  R[ '$' ]        = options
-  R[ '$new' ]     = @$new
+@$new = ( G, $ ) ->
+  if ( arity = arguments.length ) is 1
+    [ G, $, ] = [ null, G, ]
+  $          ?= {}
+  $[ name ]  ?= value for name, value of @$
+  R           = G ? {}
+  R[ '$' ]    = $
   #.........................................................................................................
   for rule_name, get_rule of @$new
-    # whisper rule_name
-    R[ rule_name ] = get_rule R, options
+    unless R[ rule_name ]?
+      R[ rule_name ] = get_rule R, $
   #.........................................................................................................
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.bracketed = ( G, $ ) ->
-  R = π.seq $[ 'opener' ], ( π.repeat => G.expression ), $[ 'closer' ]
-  R.onMatch ( match ) -> [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
+@$new.$digits = ( G, $ ) ->
+  R = π.alt -> π.repeat $[ 'digit' ], 1
+  R = R.onMatch ( match ) ->
+    # whisper match
+    ( submatch[ 0 ] for submatch in match ).join ''
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.phrases = ( G, $ ) ->
-  R = π.repeatSeparated G.phrase, /// #{XRE.$_esc $[ 'connector' ]} ///
-  R.onMatch ( match ) -> [ 'phrases', match... ]
+@$new.$sign = ( G, $ ) ->
+  R = π.optional $[ 'sign' ]
+  R = R.onMatch ( match ) -> if match.length is 0 then '' else match[ 0 ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.phrase = ( G, $ ) ->
-  metachrs  = XRE.$_esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
-  R         = π.regex /// [^ #{metachrs} ]+ ///
-  R.onMatch ( match ) -> [ 'phrase', match[ 0 ] ]
+@$new.$literal = ( G, $ ) ->
+  R = π.alt -> π.seq G.$sign, G.$digits
+  # R = R.onMatch ( match ) -> match.join ''
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.expression = ( G, $ ) ->
-  return π.alt G.bracketed, G.phrases
+  R = π.alt -> G.$literal
+  R = R.onMatch ( match ) ->
+    [ sign, digits, ] = match
+    sign    = translate   sign,  sign_mapping if   sign.length > 0 and (  sign_mapping = $[  'signs' ] )?
+    digits  = translate digits, digit_mapping if digits.length > 0 and ( digit_mapping = $[ 'digits' ] )?
+    raw     = sign + digits
+    value   = parseInt raw, 10
+    return NEW.literal 'number', raw, value
+  return R
 
-#-----------------------------------------------------------------------------------------------------------
-@$new null, @
 
+#===========================================================================================================
+# HELPERS
 #-----------------------------------------------------------------------------------------------------------
+translate = ( text, mapping ) ->
+  ### TAINT does not honour codepoints beyond 0xffff ###
+  R = []
+  for original_chr in text
+    new_chr = mapping[ original_chr ]
+    throw new Error "unable to translate #{rpr original_chr}" unless new_chr?
+    R.push new_chr
+  return R.join ''
+
+
+#===========================================================================================================
+# APPLY NEW TO MODULE
+#-----------------------------------------------------------------------------------------------------------
+### Run `@$new` to make `@` (`this`) an instance of this grammar with default options: ###
+@$new @, null
+
+
+
+#===========================================================================================================
 @$TESTS =
 
-  # #---------------------------------------------------------------------------------------------------------
-  # '$new: returns new grammar': ( test ) ->
-  #   ### TAINT move to NEW ###
-  #   info name for name of @$new()
+  #---------------------------------------------------------------------------------------------------------
+  '$digits (default G): parses a sequence of ASCII digits': ( test ) ->
+    G = @
+    probes_and_results = [
+      [ '1234',         '1234',       ]
+      [ '0',            '0',          ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      test.eq ( G.$digits.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
-  'bracketed: parses simple bracketed phrase': ( test ) ->
-    G       = @$new opener: '(', connector: '|', closer: ')'
-    source  = """(xxx)"""
-    # info JSON.stringify @bracketed.run source
-    test.eq ( G.bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
+  '$digits (default G): rejects anything but ASCII digits': ( test ) ->
+    G = @
+    probes = [ '', 'x0', ]
+    for probe in probes
+      test.throws ( -> G.$digits.run probe ), /Expected/
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'bracketed: parses nested bracketed phrase': ( test ) ->
-  #   source  = """(A(B)C)"""
-  #   # info JSON.stringify @bracketed.run source
-  #   test.eq ( @bracketed.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$new: returns grammar with custom options': ( test ) ->
+    G = @$new digit: /[〇一二三四五六七八九]/
+    test.eq G[ '$' ], { digit: /[〇一二三四五六七八九]/, sign: /[-+]/, digits: null, signs: null }
+    for name in [ '$digits', '$literal', 'expression', ]
+      ### TAINT this is a very shallow test: ###
+      test.ok G[ name ]?
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'bracketed: parses multiply nested bracketed phrase': ( test ) ->
-  #   source  = """(xxx(yyy(zzz))aaa)"""
-  #   # info JSON.stringify @bracketed.run source
-  #   test.eq ( @bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$digits (custom G): parses a sequence of Chinese digits': ( test ) ->
+    options =
+      digit:      /[〇一二三四五六七八九]/
+      digits:
+        '〇':        '0'
+        '一':        '1'
+        '二':        '2'
+        '三':        '3'
+        '四':        '4'
+        '五':        '5'
+        '六':        '6'
+        '七':        '7'
+        '八':        '8'
+        '九':        '9'
+    G = @$new options
+    probes_and_results = [
+      [ '一二三四',         '一二三四',         ]
+      [ '〇六三',           '〇六三',               ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      test.eq ( G.$digits.run probe ), result
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'bracketed: parses multiply nested bracketed phrase with connectors': ( test ) ->
-  #   source  = """(xxx|www|333(yyy(zzz))aaa)"""
-  #   # info JSON.stringify @bracketed.run source
-  #   test.eq ( @bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$digits (default G): rejects anything but ASCII digits': ( test ) ->
+    G = @
+    probes = [
+      ''
+      'x0'
+      ]
+    for probe in probes
+      test.throws ( -> G.$digits.run probe ), /Expected/
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'expression: parses simple bracketed phrase': ( test ) ->
-  #   source  = """(xxx)"""
-  #   # info JSON.stringify @expression.run source
-  #   test.eq ( @expression.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$literal (default G): parses a sequence of optional sign, ASCII digits': ( test ) ->
+    G = @
+    probes_and_results = [
+      [ '1234',         [ '',   '1234',   ],    ]
+      [ '0',            [ '',   '0',      ],    ]
+      [ '+1234',        [ '+',  '1234',   ],    ]
+      [ '+0',           [ '+',  '0',      ],    ]
+      [ '-1234',        [ '-',  '1234',   ],    ]
+      [ '-0',           [ '-',  '0',      ],    ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      test.eq ( G.$literal.run probe ), result
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'expression: parses nested bracketed phrase': ( test ) ->
-  #   source  = """(A(B)C)"""
-  #   # info JSON.stringify @expression.run source
-  #   test.eq ( @expression.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  'expression (default G): parses an integer, returns node with value': ( test ) ->
+    G = @
+    probes_and_results = [
+      [ '1234',           NEW.literal 'number', '1234',   1234    ]
+      [ '0',              NEW.literal 'number', '0',      0       ]
+      [ '+1234',          NEW.literal 'number', '+1234',  +1234   ]
+      [ '+0',             NEW.literal 'number', '+0',     +0      ]
+      [ '-1234',          NEW.literal 'number', '-1234',  -1234   ]
+      [ '-0',             NEW.literal 'number', '-0',     -0      ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      test.eq ( G.expression.run probe ), result
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'expression: parses multiply nested bracketed phrase': ( test ) ->
-  #   source  = """(xxx(yyy(zzz))aaa)"""
-  #   # info JSON.stringify @expression.run source
-  #   test.eq ( @expression.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
-
-  # #---------------------------------------------------------------------------------------------------------
-  # 'expression: parses multiply nested bracketed phrase with connectors': ( test ) ->
-  #   source  = """(xxx|www|333(yyy(zzz))aaa)"""
-  #   # info JSON.stringify @expression.run source
-  #   test.eq ( @expression.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
-
-
-#-----------------------------------------------------------------------------------------------------------
-@_ = ->
-  njs_fs  = require 'fs'
-  write   = ( route, content ) -> njs_fs.writeFileSync route, content
-  parse_info = π.parse @expression, source, debugGraph: true
-  # parse_info = π.parse @bracketed, source, debugGraph: true
-  if parse_info[ 'ok' ]
-    info parse_info[ 'match' ]
-  else
-    warn parse_info[ 'message' ] + '\n' + parse_info[ 'state' ].toSquiggles().join '\n'
-    write "/tmp/process.dot", parse_info[ 'state' ].debugGraphToDot()
-
-#-----------------------------------------------------------------------------------------------------------
-@_write_graphs = ->
-  njs_fs  = require 'fs'
-  write   = ( route, content ) -> njs_fs.writeFileSync route, content
-  for name in 'expression phrase bracketed'.split /\s+/
-    grammar = @[ name ]
-    # info ( name for name of grammar )
-    write "/tmp/#{name}.dot", grammar.toDot()
-    # write "/tmp/#{name}.dot",
-
-
-############################################################################################################
-unless module.parent?
-  @_()
-  @_write_graphs()
-
+  #---------------------------------------------------------------------------------------------------------
+  'expression (custom G): parses an integer written with CJK digits, returns node with value': ( test ) ->
+    options =
+      digit:      /[〇一二三四五六七八九]/
+      sign:       /[PM]/
+      digits:     { '〇':'0','一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','七':'7','八':'8','九':'9',}
+      signs:      { 'M': '-', 'P': '+', }
+    G = @$new options
+    probes_and_results = [
+      [ '一二三四',    NEW.literal 'number', '1234',   1234    ]
+      [ '〇',         NEW.literal 'number', '0',      0       ]
+      [ 'P一二三四',   NEW.literal 'number', '+1234',  +1234   ]
+      [ 'P〇',        NEW.literal 'number', '+0',     +0      ]
+      [ 'M一二三四',   NEW.literal 'number', '-1234',  -1234   ]
+      [ 'M〇',        NEW.literal 'number', '-0',     -0      ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      test.eq ( G.expression.run probe ), result
 
 
