@@ -56,7 +56,7 @@ XRE                       = require './9-xre'
     return match.join ''
 
 #-----------------------------------------------------------------------------------------------------------
-# /.*/ makes the rule fail:
+### `/.* /` instead of `/.+/` makes the rule fail: ###
 # @$_indented_line =  ( π.seq @$_indentation, /.*/, π.optional '\n' )
 @$_raw_indented_material_line = ( π.seq @$_indentation, /.+/ , π.optional '\n' )
   .onMatch ( match ) -> return [ match[ 0 ], match[ 1 ][ 0 ], match[ 2 ] ]
@@ -76,46 +76,39 @@ XRE                       = require './9-xre'
   # .onMatch ( match ) -> NEW.x_indentation match.length / 2
 
 #-----------------------------------------------------------------------------------------------------------
-@$_line = π.seq @$_metachr, @$_raw_indented_material_line
+# @$_line = π.seq @$_metachr, @$_raw_indented_material_line
 
 #-----------------------------------------------------------------------------------------------------------
-'⟦+(...)(?=⟦)'   #
-'⟦+(...)(?=∿)'   #
-'⟦+(...)(?=⟧)'   #
-'∿+(...)(?=⟦)'   #
-'∿+(...)(?=∿)'   #
-'∿+(...)(?=⟧)'   #
-'⟧+(...)(?=⟦)'   #
-'⟧+(...)(?=∿)'   #
-'⟧+(...)(?=⟧)'   #
-
+# @line = π.seq @$_metachr, @$_nometachrs, @$_metachr
 
 #-----------------------------------------------------------------------------------------------------------
-@line = π.seq @$_metachr, @$_nometachrs, @$_metachr
+# @lines = π.repeat @line
 
 #-----------------------------------------------------------------------------------------------------------
-@lines = π.repeat @line
-
-
-
-#-----------------------------------------------------------------------------------------------------------
-@phrase = ( π.alt => whisper 'phrase'; π.regex /// [^ ( | ) ]+ /// )
+### TAINT must escape meta-chrs ###
+### TAINT must delay to allow for late changes ###
+@phrase = ( π.regex /// [^ #{@$[ 'opener' ]} #{@$[ 'connector' ]} #{@$[ 'closer' ]} ]+ /// )
   .onMatch ( match ) ->
     R = [ 'phrase', match[ 0 ] ]
     whisper R
     return R
+  .describe "one or more non-meta characters"
 
 #-----------------------------------------------------------------------------------------------------------
-# @bracketed = ( π.seq '(', π.repeat @expression, ')' )
-# @bracketed = ( π.alt => whisper 'bracketed'; π.seq '(', @phrase, ')' )
-@bracketed = ( π.alt => whisper 'bracketed'; π.seq '(', ( π.repeat @expression ), ')' )
+@phrases = ( π.repeatSeparated @phrase, /\|/ )
+  .onMatch ( match ) ->
+    # whisper match
+    return [ 'phrases', match... ]
+
+#-----------------------------------------------------------------------------------------------------------
+@bracketed = ( π.seq '(', ( π.repeat => @expression ), ')' )
   .onMatch ( match ) ->
     R = [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
     whisper R
     return R
 
 #-----------------------------------------------------------------------------------------------------------
-@expression = ( π.alt => whisper 'expression'; π.alt ( => @bracketed ), ( => @phrase ) )
+@expression = ( π.alt @bracketed, @phrases )
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -125,11 +118,17 @@ XRE                       = require './9-xre'
 #===========================================================================================================
 # TESTS
 #-----------------------------------------------------------------------------------------------------------
-@TESTS =
+@$TESTS =
 
   #---------------------------------------------------------------------------------------------------------
-  '$...': ( test ) ->
-    test.fail "no tests"
+  'expression: parses simple bracketed': ( test ) ->
+    source  = """(xxx)"""
+    source  = """(A(B)C)"""
+    source  = """(xxx(yyy(zzz))aaa)"""
+    source  = """(xxx|www|333(yyy(zzz))aaa)"""
+    test.eq ( @expression.run probe ), ( NEW.literal 'digits', probe, probe )
+
+
 
 ############################################################################################################
 @_ = ->
@@ -219,8 +218,11 @@ XRE                       = require './9-xre'
   ### TAINT must keep line numbers; also applies to indentations ###
   # if R[ 0 ] isnt '\n'
   debug '\n' + R
-  debug @line.run "⟦x -= 1∿"
+  # debug @line.run "⟦x -= 1∿"
   # debug @lines.run R
+
+
+
 
 @_() unless module.parent?
 

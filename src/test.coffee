@@ -17,6 +17,7 @@ debug                     = TRM.get_logger 'debug',     badge
 warn                      = TRM.get_logger 'warn',      badge
 help                      = TRM.get_logger 'help',      badge
 urge                      = TRM.get_logger 'urge',      badge
+praise                    = TRM.get_logger 'praise',    badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
 NEW                       = require './NEW'
@@ -53,25 +54,43 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
 
 #-----------------------------------------------------------------------------------------------------------
 @main = ->
-  route_infos = LOADER.get_route_infos()
+  route_infos   = LOADER.get_route_infos all: yes
+  route_count   = route_infos.length
+  test_count    = 0
+  pass_count    = 0
+  fail_count    = 0
+  miss_count    = 0
   #.........................................................................................................
   for route_info in route_infos
     { route, name: module_name, nr } = route_info
+    info ( rpr nr ) + '-' + module_name
     module = require route
     #.......................................................................................................
-    unless ( TESTS = module[ 'TESTS' ] )?
-      urge "no tests found for #{module_name} (#{route})"
+    unless ( TESTS = module[ '$TESTS' ] )?
+      miss_count += 1
+      urge "no tests found for #{nr}-#{module_name} (#{route})"
       continue
     #.......................................................................................................
     for test_name of TESTS
-      locator = module_name + '/' + test_name
+      test_count += 1
+      locator     = ( rpr nr ) + '-' + module_name + '/' + test_name
       try
         TESTS[ test_name ].call module, @test
       catch error
+        fail_count += 1
         warn "#{locator}:"
         warn error[ 'message' ]
         continue
-      log "#{TRM.grey locator}: #{TRM.green 'ok'}"
+      #.....................................................................................................
+      pass_count += 1
+      praise "#{locator}: ok"
+  #.........................................................................................................
+  info()
+  info    "inspected #{route_count} modules;"
+  urge    "of these, #{miss_count} modules had no test cases."
+  whisper "Of #{test_count} tests,"
+  praise  "#{pass_count} tests passed,"
+  warn    "and #{fail_count} tests failed."
   #.........................................................................................................
   return null
 
