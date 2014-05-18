@@ -83,7 +83,7 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
         continue
       #.....................................................................................................
       pass_count += 1
-      praise "#{locator}: ok"
+      praise "#{locator}"
   #.........................................................................................................
   info()
   info    "Inspected #{route_count} modules;"
