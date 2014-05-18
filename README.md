@@ -6,11 +6,10 @@
 
 # Arabika
 
-Nothing here yet
+Experiments in Parser Combinators, Modular Grammars, Domain-Specific Languages (DSLs), Indentation-Based Grammars
+and Symbiotic Languages (that compile to JavaScript).
 
-### todo
-
-Tower of Babel
+<!-- Tower of Babel -->
 
 
 
