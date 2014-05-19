@@ -67,7 +67,7 @@ XRE                       = require './9-xre'
 ### TAINT `π.alt` is an expedient here ###
 ### TAINT no memoizing ###
 @$_ascii_punctuation = π.alt =>
-  π.regex XRE '[' + ( XRE.$_esc @$_constants[ 'ascii-punctuation' ] ) + ']'
+  π.regex XRE '[' + ( XRE.$esc @$_constants[ 'ascii-punctuation' ] ) + ']'
 
 #-----------------------------------------------------------------------------------------------------------
 @$_chr = ( π.regex XRE '.', 'Qs' )

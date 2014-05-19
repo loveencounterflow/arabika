@@ -62,7 +62,7 @@ rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
 π                         = require 'coffeenode-packrattle'
 # BNP                       = require 'coffeenode-bitsnpieces'
-NEW                       = require './NEW'
+$new                      = require './NEW'
 XRE                       = require './9-xre'
 
 
@@ -72,27 +72,13 @@ XRE                       = require './9-xre'
   'digit':              /[0123456789]/
   ### a RegEx that matches one sign (to act as plus and minus): ###
   'sign':               /[-+]/
-  ### a POD that maps from custom digits to ASCII digits: ###
+  ### an optional POD that maps from custom digits to ASCII digits: ###
   'digits':             null
-  ### a POD that maps from custom signs to ASCII signs: ###
+  ### an optional POD that maps from custom signs to ASCII signs: ###
   'signs':              null
 
-
 #-----------------------------------------------------------------------------------------------------------
-### TAINT move to NEW ###
-@$new = ( G, $ ) ->
-  if ( arity = arguments.length ) is 1
-    [ G, $, ] = [ null, G, ]
-  $          ?= {}
-  $[ name ]  ?= value for name, value of @$
-  R           = G ? {}
-  R[ '$' ]    = $
-  #.........................................................................................................
-  for rule_name, get_rule of @$new
-    unless R[ rule_name ]?
-      R[ rule_name ] = get_rule R, $
-  #.........................................................................................................
-  return R
+@$new = $new.new @
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$digits = ( G, $ ) ->
@@ -123,7 +109,7 @@ XRE                       = require './9-xre'
     digits  = translate digits, digit_mapping if digits.length > 0 and ( digit_mapping = $[ 'digits' ] )?
     raw     = sign + digits
     value   = parseInt raw, 10
-    return NEW.literal 'number', raw, value
+    return $new.literal 'number', raw, value
   return R
 
 
@@ -227,12 +213,12 @@ translate = ( text, mapping ) ->
   'expression (default G): parses an integer, returns node with value': ( test ) ->
     G = @
     probes_and_results = [
-      [ '1234',           NEW.literal 'number', '1234',   1234    ]
-      [ '0',              NEW.literal 'number', '0',      0       ]
-      [ '+1234',          NEW.literal 'number', '+1234',  +1234   ]
-      [ '+0',             NEW.literal 'number', '+0',     +0      ]
-      [ '-1234',          NEW.literal 'number', '-1234',  -1234   ]
-      [ '-0',             NEW.literal 'number', '-0',     -0      ]
+      [ '1234',           $new.literal 'number', '1234',   1234    ]
+      [ '0',              $new.literal 'number', '0',      0       ]
+      [ '+1234',          $new.literal 'number', '+1234',  +1234   ]
+      [ '+0',             $new.literal 'number', '+0',     +0      ]
+      [ '-1234',          $new.literal 'number', '-1234',  -1234   ]
+      [ '-0',             $new.literal 'number', '-0',     -0      ]
       ]
     for [ probe, result, ] in probes_and_results
       test.eq ( G.expression.run probe ), result
@@ -246,12 +232,12 @@ translate = ( text, mapping ) ->
       signs:      { 'M': '-', 'P': '+', }
     G = @$new options
     probes_and_results = [
-      [ '一二三四',    NEW.literal 'number', '1234',   1234    ]
-      [ '〇',         NEW.literal 'number', '0',      0       ]
-      [ 'P一二三四',   NEW.literal 'number', '+1234',  +1234   ]
-      [ 'P〇',        NEW.literal 'number', '+0',     +0      ]
-      [ 'M一二三四',   NEW.literal 'number', '-1234',  -1234   ]
-      [ 'M〇',        NEW.literal 'number', '-0',     -0      ]
+      [ '一二三四',    $new.literal 'number', '1234',   1234    ]
+      [ '〇',         $new.literal 'number', '0',      0       ]
+      [ 'P一二三四',   $new.literal 'number', '+1234',  +1234   ]
+      [ 'P〇',        $new.literal 'number', '+0',     +0      ]
+      [ 'M一二三四',   $new.literal 'number', '-1234',  -1234   ]
+      [ 'M〇',        $new.literal 'number', '-0',     -0      ]
       ]
     for [ probe, result, ] in probes_and_results
       test.eq ( G.expression.run probe ), result

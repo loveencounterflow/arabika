@@ -1,12 +1,17 @@
 
+###
+
+
+
+
+###
+
+
+
 ############################################################################################################
-# njs_util                  = require 'util'
-# njs_path                  = require 'path'
-# njs_fs                    = require 'fs'
-#...........................................................................................................
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾8-character﴿'
+badge                     = '﴾0-bracketed-expressions﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge
@@ -18,212 +23,341 @@ echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
 π                         = require 'coffeenode-packrattle'
-BNP                       = require 'coffeenode-bitsnpieces'
-NEW                       = require './NEW'
+# BNP                       = require 'coffeenode-bitsnpieces'
+$new                      = require './NEW'
 XRE                       = require './9-xre'
+
+
+
+
+
+
 
 #-----------------------------------------------------------------------------------------------------------
 @$ =
-  ### TAINT dot suspected to match incorrectly? ###
-  ### TAINT assumes newlines are equal to `\n` ###
-  'leading-ws':         XRE '(?:^|\\n)(\\p{Space_Separator}*)(.*)(?=\\n|$)'
+  #.........................................................................................................
+  'opener':             '⇩'
+  'connector':          '⇨'
+  'closer':             '⇧'
+
+  ### other popular choices include:
+
+  #.........................................................................................................
+  'opener':             '↳'
+  'connector':          '↦'
+  'closer':             '↱'
+  #.........................................................................................................
+  'opener':             '↧'
+  'connector':          '↦'
+  'closer':             '↥'
+  #.........................................................................................................
+  'opener':             '￬'
+  'connector':          '￫'
+  'closer':             '￪'
+  #.........................................................................................................
+
+  ###
   'opener':             '⟦'
   'connector':          '∿'
   'closer':             '⟧'
 
-#-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-### TAINT no memoizing ###
-@$_metachr = π.alt =>
-  π.regex XRE '[' + ( XRE.$_esc @$[ 'opener' ] + @$[ 'connector' ] + @$[ 'closer' ] ) + ']'
+  #.........................................................................................................
+  'indentation-chr':    ' '
+  'chrs-per-level':     2
+  ### Maximum number of steps that positive indents may progress;
+  set to 1 to allow standard single-step indentation (as in Python and CoffeeScript),
+  set to e.g. 2 to allow 'unconventional' single and double-step indentation,
+  set to Infinity to allow unlimited indentation deltas,
+  set to 0 to disallow indentation altogether: ###
+  'delta':              1
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-### TAINT no memoizing ###
-@$_nometachrs = π.alt =>
-  π.regex XRE '[^' + ( XRE.$_esc @$[ 'opener' ] + @$[ 'connector' ] + @$[ 'closer' ] ) + ']*'
-
-#-----------------------------------------------------------------------------------------------------------
-@$_indentation = ( π.repeat XRE '.', 'Qs' )
-  .onMatch ( match ) -> match[ 0 ]
-
-#-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@$_indentation =  ( π.repeat ' ' )
-  .onMatch ( match ) ->
-    # unless match.length / 2 == parseInt match.length / 2
-    #   throw new Error "inconsistent indentation"
-    return match.join ''
-
-#-----------------------------------------------------------------------------------------------------------
-### `/.* /` instead of `/.+/` makes the rule fail: ###
-# @$_indented_line =  ( π.seq @$_indentation, /.*/, π.optional '\n' )
-@$_raw_indented_material_line = ( π.seq @$_indentation, /.+/ , π.optional '\n' )
-  .onMatch ( match ) -> return [ match[ 0 ], match[ 1 ][ 0 ], match[ 2 ] ]
-
-#-----------------------------------------------------------------------------------------------------------
-### TAINT simplified version of LWS ###
-@$_raw_blank_line = ( π.regex /([\x20\t]+)(\n|$)/ )
-  .onMatch ( match ) -> return [ '', match[ 1 ], match[ 2 ] ]
-
-#-----------------------------------------------------------------------------------------------------------
-### TAINT simplified version of LWS ###
-@$_raw_line = π.alt @$_raw_blank_line, @$_raw_indented_material_line
-
-#-----------------------------------------------------------------------------------------------------------
-# @$_indented_lines = π.seq @$_indented_line, @$_indented_line
-@$_raw_lines = π.repeat @$_raw_line #, 1
-  # .onMatch ( match ) -> NEW.x_indentation match.length / 2
-
-#-----------------------------------------------------------------------------------------------------------
-# @$_line = π.seq @$_metachr, @$_raw_indented_material_line
-
-#-----------------------------------------------------------------------------------------------------------
-# @line = π.seq @$_metachr, @$_nometachrs, @$_metachr
-
-#-----------------------------------------------------------------------------------------------------------
-# @lines = π.repeat @line
-
-#-----------------------------------------------------------------------------------------------------------
-### TAINT must escape meta-chrs ###
-### TAINT must delay to allow for late changes ###
-@phrase = ( π.regex /// [^ #{@$[ 'opener' ]} #{@$[ 'connector' ]} #{@$[ 'closer' ]} ]+ /// )
-  .onMatch ( match ) ->
-    R = [ 'phrase', match[ 0 ] ]
-    whisper R
-    return R
-  .describe "one or more non-meta characters"
-
-#-----------------------------------------------------------------------------------------------------------
-@phrases = ( π.repeatSeparated @phrase, /\|/ )
-  .onMatch ( match ) ->
-    # whisper match
-    return [ 'phrases', match... ]
-
-#-----------------------------------------------------------------------------------------------------------
-@bracketed = ( π.seq '(', ( π.repeat => @expression ), ')' )
-  .onMatch ( match ) ->
-    R = [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
-    whisper R
-    return R
-
-#-----------------------------------------------------------------------------------------------------------
-@expression = ( π.alt @bracketed, @phrases )
-
-
-#-----------------------------------------------------------------------------------------------------------
-# @suite = π.seq ( => @$[ 'opener' ] ), '\n',
+@$new = $new.new @
 
 
 #===========================================================================================================
-# TESTS
+# TURNING INDENTED INTO BRACKETED INTERMEDIATE REPRESENTATION
 #-----------------------------------------------------------------------------------------------------------
+### TAINT must parameterize ###
+@$new.$_indentation = ( G, $ ) ->
+  R = π.alt -> ( π.repeat ' ' )
+  R = R.onMatch ( match ) -> return match.join ''
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+### TAINT naive line ending ###
+@$new.$_raw_indented_material_line = ( G, $ ) ->
+  R = π.alt -> ( π.seq G.$_indentation, /.+/ , π.optional '\n' )
+  R = R.onMatch ( match ) -> return [ match[ 0 ], match[ 1 ][ 0 ], match[ 2 ] ]
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+### TAINT must parameterize ###
+@$new.$_raw_blank_line = ( G, $ ) ->
+  R = ( π.regex /([\x20\t]+)(\n|$)/ )
+  R = R.onMatch ( match ) -> return [ '', match[ 1 ], match[ 2 ] ]
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$_raw_line = ( G, $ ) ->
+  return π.alt ( -> G.$_raw_blank_line ), ( -> G.$_raw_indented_material_line )
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$_raw_lines = ( G, $ ) ->
+  return π.repeat -> G.$_raw_line
+
+#-----------------------------------------------------------------------------------------------------------
+### TAINT must escape occurrences of meta-chrs in source ####
+### TAINT should use parser state to indicate error locations ####
+@$new.$_as_bracketed = ( G, $ ) ->
+  R = ( source ) ->
+    lines               = G.$_raw_lines.run source
+    R                   = []
+    chrs_per_level      = $[ 'chrs-per-level' ]
+    delta               = $[ 'delta' ]
+    max_indent_chrs     = delta * chrs_per_level
+    base_raw_level      = -chrs_per_level
+    current_raw_level   = base_raw_level
+    #.......................................................................................................
+    for line, line_idx in lines
+      [ indentation, material, ending, ] = line
+      raw_level = indentation.length
+      level     = raw_level / chrs_per_level
+      #.........................................................................................................
+      unless raw_level is Math.floor raw_level
+        # warn level, current_raw_level
+        throw new Error """
+          inconsistent indentation (no multiple of #{chrs_per_level} characters) on line ##{line_idx + 1}:
+          #{rpr line}"""
+      #.........................................................................................................
+      if raw_level > current_raw_level + max_indent_chrs
+        # warn raw_level, current_raw_level
+        throw new Error """
+          inconsistent indentation (too deep) on line ##{line_idx + 1}:
+          #{rpr line}"""
+      #.........................................................................................................
+      if raw_level > current_raw_level
+        dents = []
+        while raw_level > current_raw_level
+          current_raw_level += chrs_per_level
+          dents.push $[ 'opener' ]
+        R.push dents.join ''
+      #.........................................................................................................
+      else if current_raw_level > raw_level
+        dents = []
+        while current_raw_level > raw_level
+          current_raw_level -= chrs_per_level
+          dents.push $[ 'closer' ]
+        R.push dents.join ''
+      else
+        R.push $[ 'connector' ]
+      R.push material
+      # R.push '\n'
+    #...........................................................................................................
+    ### TAINT code repetition ###
+    if current_raw_level > base_raw_level
+      dents = []
+      while current_raw_level > base_raw_level
+        current_raw_level -= chrs_per_level
+        dents.push $[ 'closer' ]
+      R.push dents.join ''
+    R = R.join ''
+  #.........................................................................................................
+  return R
+
+
+#===========================================================================================================
+# PARSING BRACKETED INTERMEDIATE REPRESENTATION
+#-----------------------------------------------------------------------------------------------------------
+@$new.$bracketed = ( G, $ ) ->
+  R = π.alt -> π.seq $[ 'opener' ], ( π.repeat => G.$suite ), $[ 'closer' ]
+  R = R.onMatch ( match ) -> [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$phrases = ( G, $ ) ->
+  R = π.alt -> π.repeatSeparated G.$phrase, /// #{XRE.$esc $[ 'connector' ]} ///
+  R = R.onMatch ( match ) -> [ 'phrases', match... ]
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$phrase = ( G, $ ) ->
+  metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
+  R         = π.alt -> π.regex /// [^ #{metachrs} ]+ ///
+  R         = R.onMatch ( match ) -> [ 'phrase', match[ 0 ] ]
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$suite = ( G, $ ) ->
+  return π.alt -> π.alt G.$bracketed, G.$phrases
+
+
+#===========================================================================================================
+# APPLY NEW TO MODULE
+#-----------------------------------------------------------------------------------------------------------
+### Run `@$new` to make `@` (`this`) an instance of this grammar with default options: ###
+@$new @, null
+
+
+#===========================================================================================================
 @$TESTS =
 
   #---------------------------------------------------------------------------------------------------------
-  'expression: parses simple bracketed': ( test ) ->
+  'bracketed: parses simple bracketed phrase': ( test ) ->
+    G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(xxx)"""
+    test.eq ( G.$bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
+
+  #---------------------------------------------------------------------------------------------------------
+  'bracketed: parses nested bracketed phrase': ( test ) ->
+    G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(A(B)C)"""
+    test.eq ( G.$bracketed.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
+
+  #---------------------------------------------------------------------------------------------------------
+  'bracketed: parses multiply nested bracketed phrase': ( test ) ->
+    G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(xxx(yyy(zzz))aaa)"""
+    test.eq ( G.$bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+
+  #---------------------------------------------------------------------------------------------------------
+  'bracketed: parses multiply nested bracketed phrase with connectors': ( test ) ->
+    G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(xxx|www|333(yyy(zzz))aaa)"""
-    test.eq ( @expression.run probe ), ( NEW.literal 'digits', probe, probe )
+    test.eq ( G.$bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
 
+  #---------------------------------------------------------------------------------------------------------
+  'expression: parses simple bracketed phrase': ( test ) ->
+    G       = @$new opener: '(', connector: '|', closer: ')'
+    source  = """(xxx)"""
+    test.eq ( G.$suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
 
+  #---------------------------------------------------------------------------------------------------------
+  'expression: parses nested bracketed phrase': ( test ) ->
+    G       = @$new opener: '(', connector: '|', closer: ')'
+    source  = """(A(B)C)"""
+    test.eq ( G.$suite.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
 
-############################################################################################################
-@_ = ->
-  d = @$[ 'leading-ws' ]
-  debug ''.match d
-  debug ' '.match d
-  debug '  '.match d
-  debug '\n  '.match d
-  debug 'abc'.match d
-  debug '\n    abc'.match d
+  #---------------------------------------------------------------------------------------------------------
+  'expression: parses multiply nested bracketed phrase': ( test ) ->
+    G       = @$new opener: '(', connector: '|', closer: ')'
+    source  = """(xxx(yyy(zzz))aaa)"""
+    test.eq ( G.$suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
 
-  debug()
-  debug rpr ''.split d
-  debug rpr ' '.split d
-  debug rpr '  '.split d
-  debug rpr '\n  '.split d
-  debug rpr 'abc'.split d
+  #---------------------------------------------------------------------------------------------------------
+  'expression: parses multiply nested bracketed phrase with connectors': ( test ) ->
+    G       = @$new opener: '(', connector: '|', closer: ')'
+    source  = """(xxx|www|333(yyy(zzz))aaa)"""
+    test.eq ( G.$suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
 
-  source = """
-  f = ->
-    for x in xs
+  #---------------------------------------------------------------------------------------------------------
+  '$_raw_lines: turns indented source into list of triplets': ( test ) ->
+    G       = @
+    source  = """
+    f = ->
+      for x in xs
+        while x > 0
+          x -= 1
+          log x
+          g x
+      log 'ok'
+      log 'over'
+    """
+    lines = G.$_raw_lines.run source
+    # debug JSON.stringify lines
+    test.eq lines, [["","f = ->","\n"],["  ","for x in xs","\n"],["    ","while x > 0","\n"],["      ","x -= 1","\n"],["      ","log x","\n"],["      ","g x","\n"],["  ","log 'ok'","\n"],["  ","log 'over'",""]]
+
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed: turns indented source into bracketed string': ( test ) ->
+    G       = @
+    $       = G[ '$' ]
+    source  = """
+    f = ->
+      for x in xs
+        while x > 0
+          x -= 1
+          log x
+          g x
+      log 'ok'
+      log 'over'
+    """
+    # source = """
+    # if x > 0
+    #   x += 1
+    #   print x
+    # """
+    bracketed = G.$_as_bracketed source
+    result    = "⟦f = ->⟦for x in xs⟦while x > 0⟦x -= 1∿log x∿g x⟧⟧log 'ok'∿log 'over'⟧⟧"
+    result    = result.replace /⟦/, $[ 'opener' ]
+    result    = result.replace /⟧/, $[ 'closer' ]
+    result    = result.replace /∿/, $[ 'connector' ]
+    debug bracketed
+    test.eq bracketed, result
+
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed (default G): disallow unconventional indentation': ( test ) ->
+    G       = @
+    source  = """
+    f = ->
+        for x in xs
       while x > 0
         x -= 1
         log x
         g x
-    log 'ok'
-    log 'over'
-  """
+      log 'ok'
+      log 'over'
+    """
+    test.throws ( -> G.$_as_bracketed source ), /inconsistent indentation \(too deep\) on line/
 
-  # debug @$_indented_lines.run source
-  # debug rpr @$_indentation.run '    '
-  debug rpr @$_raw_indented_material_line.run '  abc'
-  debug rpr @$_raw_indented_material_line.run '  abc\n'
-  lines = @$_raw_lines.run source
-  debug lines
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed (custom G): allow unconventional indentation': ( test ) ->
+    options =
+      'delta':  Infinity
+    #.......................................................................................................
+    G       = @$new options
+    $       = G[ '$' ]
+    #.......................................................................................................
+    source  = """
+    f = ->
+        for x in xs
+      while x > 0
+        x -= 1
+        log x
+        g x
+      log 'ok'
+      log 'over'
+    """
+    #.......................................................................................................
+    bracketed = G.$_as_bracketed source
+    result    = "⟦f = ->⟦⟦for x in xs⟧while x > 0⟦x -= 1∿log x∿g x⟧log 'ok'∿log 'over'⟧⟧"
+    result    = result.replace /⟦/, $[ 'opener' ]
+    result    = result.replace /⟧/, $[ 'closer' ]
+    result    = result.replace /∿/, $[ 'connector' ]
+    test.eq bracketed, result
 
-  ### TAINT we should probably wait with complaints about indentation until later when we can rule out the
-  existance of special constructs such as triple-quoted string literals, comments and the like; also, `!use`
-  statements may alter the semantics of indentations ###
-  R = []
-  chrs_per_level  = 2
-  base_level      = -chrs_per_level
-  current_level   = base_level
-  for line, line_idx in lines
-    [ indentation, material, ending, ] = line
-    level = indentation.length # / 2
-    # #.........................................................................................................
-    # unless level is parseInt level
-    #   warn level, current_level
-    #   throw new Error "inconsistent indentation (not an even number of spaces) on line ##{line_idx + 1}:\n#{rpr line}"
-    # #.........................................................................................................
-    # if current_level is null
-    #   unless level is 0
-    #     warn level, current_level
-    #     throw new Error "inconsistent indentation (starts with indentation) on line ##{line_idx + 1}:\n#{rpr line}"
-    # #.........................................................................................................
-    # if level > current_level + 1
-    #   warn level, current_level
-    #   throw new Error "inconsistent indentation (too deep) on line ##{line_idx + 1}:\n#{rpr line}"
-    #.........................................................................................................
-    if level > current_level
-      dents = []
-      while level > current_level
-        current_level += chrs_per_level
-        dents.push @$[ 'opener' ]
-      R.push dents.join ''
-    #.........................................................................................................
-    else if current_level > level
-      dents = []
-      while current_level > level
-        current_level -= chrs_per_level
-        dents.push @$[ 'closer' ]
-      R.push dents.join ''
-    else
-      R.push @$[ 'connector' ]
-    R.push material
-    # R.push '\n'
-  #...........................................................................................................
-  ### TAINT code repetition ###
-  if current_level > base_level
-    dents = []
-    while current_level > base_level
-      current_level -= chrs_per_level
-      dents.push @$[ 'closer' ]
-    R.push dents.join ''
-  R = R.join ''
-  ### TAINT must keep line numbers; also applies to indentations ###
-  # if R[ 0 ] isnt '\n'
-  debug '\n' + R
-  # debug @line.run "⟦x -= 1∿"
-  # debug @lines.run R
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed (default G): disallow forbidden indentation-like chrs': ( test ) ->
+    G       = @
+    source  = """
+    f = ->
+      for x in xs
+        \twhile x > 0
+          x -= 1
+          log x
+          g x
+      log 'ok'
+      log 'over'
+    """
+    # debug JSON.stringify bracketed
+    test.throws ( -> G.$_as_bracketed source ), /XXXXXXXXXXXXX/
+
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed: normalize line endings': ( test ) ->
+    throw new Error "not implemented"
+
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed: warn where meta-chrs in raw source': ( test ) ->
+    throw new Error "not implemented"
 
 
-
-
-@_() unless module.parent?
 
 
