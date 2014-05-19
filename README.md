@@ -74,11 +74,11 @@ Combinators stuff [has long been intended to lead to modular, dynamically redefi
 mainly function as high-level-to-high-level code translators](https://github.com/loveencounterflow/presentation-2012-04-16),
 so, importantly:
 
-* **(1)** if a particular choice of meta-codepoints conflicts with what you want to use
+**(1)** If a particular choice of meta-codepoints conflicts with what you want to use
 for other purposes in your source, you can always choose to use another dialect (of indentation parsing)
-to avoid that conflict;
+to avoid that conflict.
 
-* **(2)** what we're doing here already *is* source translation, and as such it wouldn't hurt to keep
+**(2)** What we're doing here already *is* source translation, and as such it wouldn't hurt to keep
 it both out of the closet and readable. In other words, if
 
 ````coffeescript
@@ -104,6 +104,10 @@ or maybe as
 ````
 ↳if x > 0↳x += 1↦print x↱↱
 ````
+
+**(3)** Take note that **although you're writing code in an indentation-based language, you can anytime
+insert code that is bracketed instead of indented—`if x > 0【x += 1〓print x】` is a legal `if` statement
+in that language!
 
 
 [Indentation-sensitive syntax for Scheme](http://srfi.schemers.org/srfi-49/srfi-49.html)

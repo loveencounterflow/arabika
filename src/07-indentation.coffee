@@ -284,11 +284,11 @@ XRE                       = require './9-xre'
       log 'ok'
       log 'over'
     """
-    source = """
-    if x > 0
-      x += 1
-      print x
-    """
+    # source = """
+    # if x > 0
+    #   x += 1
+    #   print x
+    # """
     bracketed = G.$_as_bracketed source
     result    = "⟦f = ->⟦for x in xs⟦while x > 0⟦x -= 1∿log x∿g x⟧⟧log 'ok'∿log 'over'⟧⟧"
     result    = result.replace /⟦/, $[ 'opener' ]
