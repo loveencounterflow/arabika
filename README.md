@@ -105,5 +105,10 @@ or maybe as
 ⟦if x > 0⟦x += 1∿print x⟧⟧
 ````
 
+````
+↳f = ->↳for x in xs↳while x > 0↳x -= 1↦log x↦g x↱↱log 'ok'↦log 'over'↱↱
+````
+
+
 [Indentation-sensitive syntax for Scheme](http://srfi.schemers.org/srfi-49/srfi-49.html)
 
