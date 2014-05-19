@@ -95,13 +95,13 @@ if (x > 0) { x += 1; print(x); }
 
 wouldn't you be interested in the fact that at some point that same source surfaces as
 
-````coffeescript
+````
 ⇩if x > 0⇩x += 1⇨print x⇧⇧
 ````
 
 or maybe as
 
-````coffeescript
+````
 ⟦if x > 0⟦x += 1∿print x⟧⟧
 ````
 
