@@ -96,14 +96,10 @@ if (x > 0) { x += 1; print(x); }
 wouldn't you be interested in the fact that at some point that same source surfaces as
 
 ````
-⇩if x > 0⇩x += 1⇨print x⇧⇧
+【f = ->【for x in xs【while x > 0【x -= 1〓log x〓g x】】log 'ok'〓log 'over'】】
 ````
 
 or maybe as
-
-````
-⟦if x > 0⟦x += 1∿print x⟧⟧
-````
 
 ````
 ↳f = ->↳for x in xs↳while x > 0↳x -= 1↦log x↦g x↱↱log 'ok'↦log 'over'↱↱
