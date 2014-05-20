@@ -201,7 +201,7 @@ try_escodegen = ->
     'x-verbatim':   'for x in xs'
     'raw':          'for x in xs'
     'value':        'for x in xs'
-  info ESCODEGEN.generate node, escodegen_options
+  # info ESCODEGEN.generate node, escodegen_options
   node =
     'type':         'BlockStatement',
     'x-subtype':    'suite',
@@ -211,7 +211,7 @@ try_escodegen = ->
   source = """
     for( i = f(); i++; i < 100 ){ x = g(); log( i ); }
   """
-  debug ESPRIMA.parse source
+  # debug ESPRIMA.parse source
 
   `
   node = { type: 'BlockStatement',
@@ -247,7 +247,31 @@ try_escodegen = ->
   #                   callee: { type: 'Identifier', name: 'log' },
   #                   arguments: [ { type: 'Identifier', name: 'i' } ] } } ] }
   # `
+  `
+  node = { type: 'BlockStatement',
+  'x-subtype': 'suite',
+  body:
+   [ { type: 'ExpressionStatement',
+       'x-subtype': 'auto',
+       expression:
+        { type: 'Literal',
+          'x-subtype': 'phrase',
+          'x-verbatim': 'if x > 0',
+          raw: 'if x > 0',
+          value: 'if x > 0' } },
+     { type: 'BlockStatement',
+       'x-subtype': 'suite',
+       body:
+        [ { type: 'ExpressionStatement',
+            'x-subtype': 'auto',
+            expression:
+             { type: 'Literal',
+               'x-subtype': 'phrase',
+               'x-verbatim': 'log \'ok\'',
+               raw: 'log \'ok\'',
+               value: 'log \'ok\'' } } ] } ] }  `
   info ESCODEGEN.generate node, escodegen_options
+
 
 
 # { type: 'BlockStatement',

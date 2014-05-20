@@ -3,7 +3,7 @@
 ############################################################################################################
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾base﴿'
+badge                     = '﴾new﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge
@@ -14,7 +14,7 @@ help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
 MULTIMIX                  = require 'coffeenode-multimix'
-
+PADAG                     = require './PADAG'
 
 
 
@@ -48,7 +48,21 @@ MULTIMIX                  = require 'coffeenode-multimix'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
+@expression_statement = ( subtype, expression, verbatim ) ->
+  #.........................................................................................................
+  R                 = @_new_node 'ExpressionStatement', subtype, verbatim
+  R[ 'expression' ] = expression
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
 @block_statement = ( subtype, body, verbatim ) ->
+  # alert '©445', body
+  for node, idx in body
+    whisper '©521', node, idx
+    if PADAG.isa_expression node
+      # whisper "expression: #{JSON.stringify node}"
+      body[ idx ] = @expression_statement 'auto', node
+  #.........................................................................................................
   R                 = @_new_node 'BlockStatement', subtype, verbatim
   R[ 'body'       ] = body
   return R

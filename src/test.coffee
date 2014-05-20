@@ -33,7 +33,7 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
 
   #---------------------------------------------------------------------------------------------------------
   ok: ( result ) =>
-    ### `assert.deepEqual` is broken as of https://github.com/joyent/node/issues/7161 ###
+    ### Tests whether `result` is strictly `true` (not only true-ish). ###
     throw new Error "expected true, got\n#{rpr result}" unless result is true
 
   #---------------------------------------------------------------------------------------------------------
@@ -42,11 +42,18 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
 
   #---------------------------------------------------------------------------------------------------------
   eq: ( P... ) =>
-    ### `assert.deepEqual` is broken as of https://github.com/joyent/node/issues/7161 ###
-    throw new Error "not equal: \n#{( rpr p for p in P ).join '\n'}" unless BNP.equals P...
+    ### Tests whether all arguments are pairwise and deeply equal. Uses CoffeeNode Bits'n'Pieces' `equal`
+    for testing as (1) Node's `assert` distinguishes—unnecessarily—between shallow and deep equality, and,
+    worse, [`assert.equal` and `assert.deepEqual` are broken](https://github.com/joyent/node/issues/7161),
+    as they use JavaScript's broken `==` equality operator instead of `===`. ###
+    # throw new Error "not equal: \n#{( rpr p for p in P ).join '\n'}" unless BNP.equals P...
+    throw new Error "not equal: \n#{( JSON.stringify p for p in P ).join '\n'}" unless BNP.equals P...
 
   #---------------------------------------------------------------------------------------------------------
   as_js: ( node ) =>
+    ### Given a SpiderMonkey Parser API-compliant `node` object, returns the corresponding JavaScript
+    source code as results from applying EsCodeGen (with the settings as detailed in `options.coffee`);
+    this is handy to do a quick sanity check on expected translation results. ###
     return ESCODEGEN.generate node, escodegen_options
 
   #---------------------------------------------------------------------------------------------------------
