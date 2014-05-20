@@ -9,6 +9,7 @@
 
 
 ############################################################################################################
+TYPES                     = require 'coffeenode-types'
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
 badge                     = '﴾0-bracketed-expressions﴿'
@@ -25,7 +26,7 @@ rainbow                   = TRM.rainbow.bind TRM
 π                         = require 'coffeenode-packrattle'
 # BNP                       = require 'coffeenode-bitsnpieces'
 $new                      = require './NEW'
-CHR                        = require './3-ws'
+CHR                       = require './3-chr'
 XRE                       = require './9-xre'
 
 
@@ -115,11 +116,24 @@ XRE                       = require './9-xre'
 @$new.$_raw_lines = ( G, $ ) ->
   return π.repeat -> G.$_raw_line
 
+# #-----------------------------------------------------------------------------------------------------------
+# ### used to issue warning in case metachrs appear in source ###
+# @$new.$_metachrs = ( G, $ ) ->
+#   ### TAINT code duplication: same escaped metachrs used in `$phrase` ###
+#   metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
+#   R = π.alt ( π.seq /[\s\S]*/, /// [ #{metachrs} ] ///, /[\s\S]*/ ), /[\s\S]*/
+#   R = R.onMatch ( match, state ) ->
+#     debug match
+#     return match
+#   return R
+
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT must escape occurrences of meta-chrs in source ####
 ### TAINT should use parser state to indicate error locations ####
 @$new.$_as_bracketed = ( G, $ ) ->
   R = ( source ) ->
+    source              = source.replace CHR.$nl_re, '\n'
+    source             += '\n' unless source[ source.length - 1 ] is '\n'
     lines               = G.$_raw_lines.run source
     R                   = []
     chrs_per_level      = $[ 'chrs-per-level' ]
@@ -178,9 +192,11 @@ XRE                       = require './9-xre'
 #===========================================================================================================
 # PARSING BRACKETED INTERMEDIATE REPRESENTATION
 #-----------------------------------------------------------------------------------------------------------
-@$new.$bracketed = ( G, $ ) ->
-  R = π.alt -> π.seq $[ 'opener' ], ( π.repeat => G.$suite ), $[ 'closer' ]
-  R = R.onMatch ( match ) -> [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
+@$new.$phrase = ( G, $ ) ->
+  metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
+  R         = π.alt -> π.regex /// [^ #{metachrs} ]+ ///
+  # R         = R.onMatch ( match ) -> [ 'phrase', match[ 0 ] ]
+  R         = R.onMatch ( match ) -> $new.literal 'phrase', match[ 0 ], match[ 0 ], match[ 0 ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
@@ -189,16 +205,61 @@ XRE                       = require './9-xre'
   R = R.onMatch ( match ) -> [ 'phrases', match... ]
   return R
 
+# #-----------------------------------------------------------------------------------------------------------
+# @$new.$phrases = ( G, $ ) ->
+#   accumulator = null
+#   reducer     = null
+#   R = π.reduce ( -> G.$phrase ), /// #{XRE.$esc $[ 'connector' ]} /// #, accumulator, reducer
+#   R = R.onMatch ( match ) -> debug match; [ 'phrases', match... ]; return match
+#   return R
+
 #-----------------------------------------------------------------------------------------------------------
-@$new.$phrase = ( G, $ ) ->
-  metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
-  R         = π.alt -> π.regex /// [^ #{metachrs} ]+ ///
-  R         = R.onMatch ( match ) -> [ 'phrase', match[ 0 ] ]
+@$new.suite = ( G, $ ) ->
+  R = π.alt -> π.seq $[ 'opener' ], ( -> G.$chunks ), $[ 'closer' ]
+  # R = R.onMatch ( match ) -> [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
+  R = R.onMatch ( match ) ->
+    kernel  = match[ 1 ]
+    # kernel[ '*' ] = 1
+    # whisper kernel
+    # kernel  = flatten_kernel match[ 1 ]
+    return $new.block_statement 'suite', kernel
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.$suite = ( G, $ ) ->
-  return π.alt -> π.alt G.$bracketed, G.$phrases
+@$new.$chunks = ( G, $ ) ->
+  R = π.alt ( π.repeat => G.$chunk )
+  R = R.onMatch ( match ) ->
+    # match.unshift 'chunks'
+    for idx in [ match.length - 1 .. 0 ] by -1
+      element = match[ idx ]
+      if ( TYPES.isa_list element ) and element[ 0 ] is 'phrases'
+        whisper '©442', element
+        delete match[ idx ]
+        splice match, element[ 1 .. ], idx
+    return match
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+splice = ( me, you, idx = 0 ) ->
+  ### TAINT `splice` is not too good a name for this functionality i guess ###
+  ### thx to http://stackoverflow.com/a/12190006/256361 ###
+  Array::splice.apply me, [ idx, 0, ].concat you
+  return me
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$chunk = ( G, $ ) ->
+  R = π.alt ( -> G.suite ), ( -> G.$phrases )
+  # R = R.onMatch ( match ) -> [ 'chunk', match... ]
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.expression = ( G, $ ) ->
+  R = π.alt -> G.$chunk
+  R = R.transform ( text ) -> G.$_as_bracketed text
+  # R = R.transform ( text ) -> text
+  R = R.onMatch ( match, state ) ->
+    debug match
+  return R
 
 
 #===========================================================================================================
@@ -215,49 +276,49 @@ XRE                       = require './9-xre'
   'bracketed: parses simple bracketed phrase': ( test ) ->
     G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(xxx)"""
-    test.eq ( G.$bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
+    test.eq ( G.suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
 
   #---------------------------------------------------------------------------------------------------------
   'bracketed: parses nested bracketed phrase': ( test ) ->
     G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(A(B)C)"""
-    test.eq ( G.$bracketed.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
+    test.eq ( G.suite.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
 
   #---------------------------------------------------------------------------------------------------------
   'bracketed: parses multiply nested bracketed phrase': ( test ) ->
     G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(xxx(yyy(zzz))aaa)"""
-    test.eq ( G.$bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+    test.eq ( G.suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
 
   #---------------------------------------------------------------------------------------------------------
   'bracketed: parses multiply nested bracketed phrase with connectors': ( test ) ->
     G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(xxx|www|333(yyy(zzz))aaa)"""
-    test.eq ( G.$bracketed.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+    test.eq ( G.suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
 
   #---------------------------------------------------------------------------------------------------------
   'expression: parses simple bracketed phrase': ( test ) ->
     G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(xxx)"""
-    test.eq ( G.$suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
+    test.eq ( G.$chunk.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
 
   #---------------------------------------------------------------------------------------------------------
   'expression: parses nested bracketed phrase': ( test ) ->
     G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(A(B)C)"""
-    test.eq ( G.$suite.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
+    test.eq ( G.$chunk.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
 
   #---------------------------------------------------------------------------------------------------------
   'expression: parses multiply nested bracketed phrase': ( test ) ->
     G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(xxx(yyy(zzz))aaa)"""
-    test.eq ( G.$suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+    test.eq ( G.$chunk.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
 
   #---------------------------------------------------------------------------------------------------------
   'expression: parses multiply nested bracketed phrase with connectors': ( test ) ->
     G       = @$new opener: '(', connector: '|', closer: ')'
     source  = """(xxx|www|333(yyy(zzz))aaa)"""
-    test.eq ( G.$suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+    test.eq ( G.$chunk.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
 
   #---------------------------------------------------------------------------------------------------------
   '$_raw_lines: turns indented source into list of triplets': ( test ) ->
@@ -310,9 +371,6 @@ XRE                       = require './9-xre'
     f = ->
         for x in xs
       while x > 0
-        x -= 1
-        log x
-        g x
       log 'ok'
       log 'over'
     """
@@ -362,12 +420,42 @@ XRE                       = require './9-xre'
     test.throws ( -> G.$_as_bracketed source ), /Expected end/
 
   #---------------------------------------------------------------------------------------------------------
-  '$_as_bracketed: normalize line endings': ( test ) ->
-    throw new Error "not implemented"
+  'expression (default G): parses one-liner program': ( test ) ->
+    G       = @
+    source  = "xxx"
+    debug G.expression.run source
 
   #---------------------------------------------------------------------------------------------------------
-  '$_as_bracketed: warn where meta-chrs in raw source': ( test ) ->
-    throw new Error "not implemented"
+  'expression (default G): parses program': ( test ) ->
+    G       = @
+    source  = """
+    f = ->
+      for x in xs
+        while x > 0
+          x -= 1
+          log x
+          g x
+      log 'ok'
+      log 'over'
+    """
+    node = debug G.expression.run source
+    debug test.as_js node
+
+  # #---------------------------------------------------------------------------------------------------------
+  # '$_as_bracketed: warn where meta-chrs in raw source': ( test ) ->
+  #   G       = @
+  #   source  = """
+  #   f = ->
+  #     for x in xs
+  #       \twhile x > 0
+  #         x -= 1
+  #         log x
+  #         g x
+  #     log 'ok'
+  #     log 'over'
+  #   """
+  #   debug G.$_metachrs.run source
+  #   # throw new Error "not implemented"
 
 
 

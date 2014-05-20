@@ -18,7 +18,6 @@ NEW                       = require './NEW'
 CHR                       = require './3-chr'
 NUMBER                    = require './4-number'
 TEXT                      = require './2-text'
-CHR                       = require './8-character'
 XRE                       = require './9-xre'
 
 

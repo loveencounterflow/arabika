@@ -22,6 +22,7 @@
     "coffeenode-multimix": "^0.1.3",
     "coffeenode-packrattle": "^3.0.1",
     "glob": "^3.2.9",
+    "tsort": "0.0.1",
     "xregexp3": "^3.0.0-pre"
   },
   "devDependencies": {

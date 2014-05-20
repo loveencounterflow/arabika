@@ -20,7 +20,7 @@ rainbow                   = TRM.rainbow.bind TRM
 π                         = require 'coffeenode-packrattle'
 BNP                       = require 'coffeenode-bitsnpieces'
 NEW                       = require './NEW'
-CHR                       = require './8-character'
+CHR                       = require './3-chr'
 XRE                       = require './9-xre'
 
 #-----------------------------------------------------------------------------------------------------------

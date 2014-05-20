@@ -169,8 +169,160 @@ check_nws = ->
   # debug test.throws ( -> parser.run material[ 0 ] ), /wrong/ # ok
   # try
 
+# #-----------------------------------------------------------------------------------------------------------
+# try_reduce = ->
+#   digits  = π.alt /[0-9]+/
+#   digits  = digits.onMatch ( match ) -> match[ 0 ]
+#   phrases = π.alt -> π.repeatSeparated digits, /,\s*/
+#   phrases = phrases.onMatch ( match ) -> [ 'phrases', match... ]
+#   # π.reduce
+#   debug phrases.run "7,5,3"
+
+#-----------------------------------------------------------------------------------------------------------
+try_splice = ->
+  splice = ( me, you, idx = 0 ) ->
+    ### TAINT `splice` is not too good a name for this functionality i guess ###
+    ### thx to http://stackoverflow.com/a/12190006/256361 ###
+    Array::splice.apply me, [ idx, 0, ].concat you
+    return me
+  d = [ 'a', 'b', 'c', ]
+  e = [ '1', '2', '3', ]
+  splice d, e, 1
+  log d
+
+#-----------------------------------------------------------------------------------------------------------
+try_escodegen = ->
+  ESCODEGEN                 = require 'escodegen'
+  ESPRIMA                   = require 'esprima'
+  escodegen_options         = ( require '../options' )[ 'escodegen' ]
+  node =
+    'type':         'Literal'
+    'x-subtype':    'phrase'
+    'x-verbatim':   'for x in xs'
+    'raw':          'for x in xs'
+    'value':        'for x in xs'
+  info ESCODEGEN.generate node, escodegen_options
+  node =
+    'type':         'BlockStatement',
+    'x-subtype':    'suite',
+    'body':         [ node, ]
+  # info ESCODEGEN.generate node, escodegen_options
+
+  source = """
+    for( i = f(); i++; i < 100 ){ x = g(); log( i ); }
+  """
+  debug ESPRIMA.parse source
+
+  `
+  node = { type: 'BlockStatement',
+            body:
+             [ { type: 'ExpressionStatement',
+                 expression:
+                  { type: 'AssignmentExpression',
+                    operator: '=',
+                    left: { type: 'Identifier', name: 'x' },
+                    right:
+                     { type: 'CallExpression',
+                       callee: { type: 'Identifier', name: 'g' },
+                       arguments: [] } } },
+               { type: 'ExpressionStatement',
+                 expression:
+                  { type: 'CallExpression',
+                    callee: { type: 'Identifier', name: 'log' },
+                    arguments: [ { type: 'Identifier', name: 'i' } ] } } ] }
+  `
+  # `
+  # node = { type: 'BlockStatement',
+  #           body:
+  #            [ { type: 'AssignmentExpression',
+  #                   operator: '=',
+  #                   left: { type: 'Identifier', name: 'x' },
+  #                   right:
+  #                    { type: 'CallExpression',
+  #                      callee: { type: 'Identifier', name: 'g' },
+  #                      arguments: [] } },
+  #              { type: 'ExpressionStatement',
+  #                expression:
+  #                 { type: 'CallExpression',
+  #                   callee: { type: 'Identifier', name: 'log' },
+  #                   arguments: [ { type: 'Identifier', name: 'i' } ] } } ] }
+  # `
+  info ESCODEGEN.generate node, escodegen_options
+
+
+# { type: 'BlockStatement',
+#   'x-subtype': 'suite',
+#   body:
+#    [ { type: 'Literal',
+#        'x-subtype': 'phrase',
+#        'x-verbatim': 'f = ->',
+#        raw: 'f = ->',
+#        value: 'f = ->' },
+#      ,
+#      { type: 'BlockStatement',
+#        'x-subtype': 'suite',
+#        body:
+#         [ { type: 'Literal',
+#             'x-subtype': 'phrase',
+#             'x-verbatim': 'for x in xs',
+#             raw: 'for x in xs',
+#             value: 'for x in xs' },
+#           ,
+#           { type: 'BlockStatement',
+#             'x-subtype': 'suite',
+#             body:
+#              [ { type: 'Literal',
+#                  'x-subtype': 'phrase',
+#                  'x-verbatim': 'while x > 0',
+#                  raw: 'while x > 0',
+#                  value: 'while x > 0' },
+#                ,
+#                { type: 'BlockStatement',
+#                  'x-subtype': 'suite',
+#                  body:
+#                   [ { type: 'Literal',
+#                       'x-subtype': 'phrase',
+#                       'x-verbatim': 'x -= 1',
+#                       raw: 'x -= 1',
+#                       value: 'x -= 1' },
+#                     { type: 'Literal',
+#                       'x-subtype': 'phrase',
+#                       'x-verbatim': 'log x',
+#                       raw: 'log x',
+#                       value: 'log x' },
+#                     { type: 'Literal',
+#                       'x-subtype': 'phrase',
+#                       'x-verbatim': 'g x',
+#                       raw: 'g x',
+#                       value: 'g x' },
+#                      ] } ] },
+#           { type: 'Literal',
+#             'x-subtype': 'phrase',
+#             'x-verbatim': 'log \'ok\'',
+#             raw: 'log \'ok\'',
+#             value: 'log \'ok\'' },
+#           { type: 'Literal',
+#             'x-subtype': 'phrase',
+#             'x-verbatim': 'log \'over\'',
+#             raw: 'log \'over\'',
+#             value: 'log \'over\'' },
+#            ] } ] }
+
 
 ############################################################################################################
 unless module.parent?
-  check_nws()
+  # check_nws()
+  # try_reduce()
+  # try_splice()
+  try_escodegen()
+
+
+
+
+
+
+
+
+
+
 
