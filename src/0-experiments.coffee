@@ -151,5 +151,26 @@ A                         = require './main'
   rv = π.consume A.TEXT.literal, '"+n"', debugGraph: true
   njs_fs.writeFileSync '/tmp/test2.dot', rv.state.debugGraphToDot()
 
+#-----------------------------------------------------------------------------------------------------------
+check_nws = ->
+  CHR   = require './3-chr'
+  test  = ( require './test' ).test
+  @$ =
+    'start-of-material':  CHR.nws
+  material = '\thelo'
+  material = 'helo'
+  parser = π.alt $[ 'start-of-material' ]
+  parser = parser.onMatch ( match ) ->
+    debug rpr match
+    throw new Error "xxx"
+    return match
+  # debug parser.run material[ 0 ]
+  debug test.throws ( -> parser.run material[ 0 ] ), /xxx/
+  # debug test.throws ( -> parser.run material[ 0 ] ), /wrong/ # ok
+  # try
 
+
+############################################################################################################
+unless module.parent?
+  check_nws()
 

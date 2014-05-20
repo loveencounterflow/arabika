@@ -2,7 +2,7 @@
 ############################################################################################################
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾3-ws﴿'
+badge                     = '﴾3-chr﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge
@@ -13,9 +13,44 @@ help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
 π                         = require 'coffeenode-packrattle'
+BNP                       = require 'coffeenode-bitsnpieces'
 NEW                       = require './NEW'
+XRE                       = require './9-xre'
 
 
+#-----------------------------------------------------------------------------------------------------------
+@$_constants =
+  'ascii-punctuation':  """-!"#%&'()*,./:;?@[\\]_{}"""
+  ### Sigils may start and classify simple names: ###
+  'sigils':
+    # '@':        'attribute' # ??? used for `this`
+    '.':        'hidden'
+    '_':        'private'
+    # '$':        'special' # used for interpolation!
+    '%':        'cached'
+    '!':        'attention'
+    # '°':        ''
+    # '^':        ''
+
+
+#-----------------------------------------------------------------------------------------------------------
+### TAINT `π.alt` is an expedient here ###
+### TAINT no memoizing ###
+@$_ascii_punctuation = π.alt =>
+  π.regex XRE '[' + ( XRE.$esc @$_constants[ 'ascii-punctuation' ] ) + ']'
+
+#-----------------------------------------------------------------------------------------------------------
+@$_chr = ( π.regex XRE '.', 'Qs' )
+  .onMatch ( match ) -> match[ 0 ]
+
+#-----------------------------------------------------------------------------------------------------------
+### TAINT `π.alt` is an expedient here ###
+@chr =  ( π.alt @$_chr )
+  .onMatch ( match ) -> NEW.literal 'chr', match, match
+
+
+#===========================================================================================================
+# WHITESPACE
 #-----------------------------------------------------------------------------------------------------------
 ### Linear WhiteSpace ###
 @lws = ( π.regex /\x20+/ )
@@ -27,16 +62,62 @@ NEW                       = require './NEW'
 
 #-----------------------------------------------------------------------------------------------------------
 ### no WhiteSpace ###
-@nws = ( π.regex /[^\s\x85]+/ )
+@$nws = ( π.regex /[^\s\x85]+/ )
 ### TAINT better way to chain methods? ###
-@nws = @nws.onMatch ( match ) => NEW.literal 'nws', match[ 0 ], match[ 0 ]
+@nws = @$nws.onMatch ( match ) => NEW.literal 'nws', match[ 0 ], match[ 0 ]
 @nws = @nws.describe "no-whitespace"
+
 
 #===========================================================================================================
 # TESTS
 #-----------------------------------------------------------------------------------------------------------
 @$TESTS =
 
+  #---------------------------------------------------------------------------------------------------------
+  '$chr: matches code points (instead of code units) and newlines': ( test ) ->
+    test.eq ( @$_chr.run 'x' ), 'x'
+    test.eq ( @$_chr.run '\r' ), '\r'
+    test.eq ( @$_chr.run '\n' ), '\n'
+    test.eq ( @$_chr.run '𠀝' ), '𠀝'
+
+  #---------------------------------------------------------------------------------------------------------
+  'chr: matches code points (instead of code units) and newlines': ( test ) ->
+    test.eq ( @chr.run 'x'  ), NEW.literal 'chr', 'x', 'x'
+    test.eq ( @chr.run '\r' ), NEW.literal 'chr', '\r', '\r'
+    test.eq ( @chr.run '\n' ), NEW.literal 'chr', '\n', '\n'
+    test.eq ( @chr.run '𠀝'  ), NEW.literal 'chr', '𠀝', '𠀝'
+
+  #---------------------------------------------------------------------------------------------------------
+  '$chr: accepts single character, be it one or two code units': ( test ) ->
+    probes_and_results = [
+      [ '0',                  '0' ]
+      [ 'q',                  'q' ]
+      [ '中',     　           '中' ]
+      [ '𠀝',     　           '𠀝' ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      test.eq ( @$_chr.run probe ), result
+
+  #---------------------------------------------------------------------------------------------------------
+  '$chr: rejects more than a single character': ( test ) ->
+    probes = [ '01', 'qwertz', '中中', '𠀝x', ]
+    for probe in probes
+      test.throws ( => @$_chr.run probe ), /Expected end/
+
+  #---------------------------------------------------------------------------------------------------------
+  '$ascii_punctuation: rejects anything but ASCII punctuation': ( test ) ->
+    probes = [ 'a', '', '中', '𠀁', ]
+    for probe in probes
+      # try
+      #   debug rpr probe
+      #   @$_ascii_punctuation.run probe
+      # catch error
+      #   debug error[ 'message' ]
+      test.throws ( => @$_ascii_punctuation.run probe ), /Expected /
+
+
+  #=========================================================================================================
+  # WHITESPACE
   #---------------------------------------------------------------------------------------------------------
   'nws: rejects sequences defined as whitespace in Unicode 6.2': ( test ) ->
     errors  = []

@@ -25,6 +25,7 @@ rainbow                   = TRM.rainbow.bind TRM
 π                         = require 'coffeenode-packrattle'
 # BNP                       = require 'coffeenode-bitsnpieces'
 $new                      = require './NEW'
+CHR                        = require './3-ws'
 XRE                       = require './9-xre'
 
 
@@ -91,19 +92,24 @@ XRE                       = require './9-xre'
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT naive line ending ###
 @$new.$_raw_indented_material_line = ( G, $ ) ->
-  R = π.alt -> ( π.seq G.$_indentation, /.+/ , π.optional '\n' )
-  R = R.onMatch ( match ) -> return [ match[ 0 ], match[ 1 ][ 0 ], match[ 2 ] ]
+  R = π.alt -> ( π.seq G.$_indentation, CHR.$nws, /.*/ , π.optional '\n' )
+  R = R.onMatch ( match ) ->
+    [ indentation, first_chr, rest, nl, ] = match
+    material                              = first_chr[ 0 ] + rest[ 0 ]
+    return [ indentation, material, nl, ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT must parameterize ###
+### TAINT naive whitespace definition; use CHR ###
 @$new.$_raw_blank_line = ( G, $ ) ->
   R = ( π.regex /([\x20\t]+)(\n|$)/ )
   R = R.onMatch ( match ) -> return [ '', match[ 1 ], match[ 2 ] ]
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$_raw_line = ( G, $ ) ->
-  return π.alt ( -> G.$_raw_blank_line ), ( -> G.$_raw_indented_material_line )
+  return ( π.alt ( -> G.$_raw_blank_line ), ( -> G.$_raw_indented_material_line ) )
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$_raw_lines = ( G, $ ) ->
@@ -291,9 +297,9 @@ XRE                       = require './9-xre'
     # """
     bracketed = G.$_as_bracketed source
     result    = "⟦f = ->⟦for x in xs⟦while x > 0⟦x -= 1∿log x∿g x⟧⟧log 'ok'∿log 'over'⟧⟧"
-    result    = result.replace /⟦/, $[ 'opener' ]
-    result    = result.replace /⟧/, $[ 'closer' ]
-    result    = result.replace /∿/, $[ 'connector' ]
+    result    = result.replace /⟦/g, $[ 'opener' ]
+    result    = result.replace /⟧/g, $[ 'closer' ]
+    result    = result.replace /∿/g, $[ 'connector' ]
     debug bracketed
     test.eq bracketed, result
 
@@ -333,9 +339,9 @@ XRE                       = require './9-xre'
     #.......................................................................................................
     bracketed = G.$_as_bracketed source
     result    = "⟦f = ->⟦⟦for x in xs⟧while x > 0⟦x -= 1∿log x∿g x⟧log 'ok'∿log 'over'⟧⟧"
-    result    = result.replace /⟦/, $[ 'opener' ]
-    result    = result.replace /⟧/, $[ 'closer' ]
-    result    = result.replace /∿/, $[ 'connector' ]
+    result    = result.replace /⟦/g, $[ 'opener' ]
+    result    = result.replace /⟧/g, $[ 'closer' ]
+    result    = result.replace /∿/g, $[ 'connector' ]
     test.eq bracketed, result
 
   #---------------------------------------------------------------------------------------------------------
@@ -352,7 +358,8 @@ XRE                       = require './9-xre'
       log 'over'
     """
     # debug JSON.stringify bracketed
-    test.throws ( -> G.$_as_bracketed source ), /XXXXXXXXXXXXX/
+    # test.throws ( -> G.$_as_bracketed source ), /Expected no-whitespace/
+    test.throws ( -> G.$_as_bracketed source ), /Expected end/
 
   #---------------------------------------------------------------------------------------------------------
   '$_as_bracketed: normalize line endings': ( test ) ->

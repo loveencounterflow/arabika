@@ -93,7 +93,7 @@ is the language you enjoy writing stuff in, and that gets turned into
 if (x > 0) { x += 1; print(x); }
 ````
 
-wouldn't you be interested in the fact that at some point that same source surfaces as
+wouldn't you be interested in the fact that at some point that same program surfaces as
 
 ````
 【if x > 0【x += 1〓print x】】
@@ -106,8 +106,8 @@ or maybe as
 ````
 
 **(3)** Take note that **although you're writing code in an indentation-based language, you can anytime
-insert code that is bracketed instead of indented—`if x > 0【x += 1〓print x】` is a legal `if` statement
-in that language!
+insert code that is bracketed instead of indented**—it makes no difference to the parser whether a ststement
+like `if x > 0【x += 1〓print x】` was bracketed by the parser or by the programmer.
 
 
 [Indentation-sensitive syntax for Scheme](http://srfi.schemers.org/srfi-49/srfi-49.html)

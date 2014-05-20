@@ -15,7 +15,7 @@ echo                      = TRM.echo.bind TRM
 #...........................................................................................................
 π                         = require 'coffeenode-packrattle'
 NEW                       = require './NEW'
-WS                        = require './3-ws'
+CHR                       = require './3-chr'
 NUMBER                    = require './4-number'
 TEXT                      = require './2-text'
 CHR                       = require './8-character'
@@ -32,7 +32,7 @@ XRE                       = require './9-xre'
 @$_symbol_sigil    = π.alt => π.string @$[ 'symbol-sigil' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@symbol           = ( π.seq @$_symbol_sigil, WS.nws )
+@symbol           = ( π.seq @$_symbol_sigil, CHR.nws )
   .onMatch ( match ) =>
     [ sigil, { raw, value } ] = match
     return NEW.literal 'symbol', sigil + raw, value
@@ -45,7 +45,7 @@ XRE                       = require './9-xre'
 @use_argument     = π.alt @symbol, NUMBER.digits, TEXT.literal
 
 #-----------------------------------------------------------------------------------------------------------
-@use_statement    = ( π.seq @$_use_keyword, WS.ilws, @use_argument )
+@use_statement    = ( π.seq @$_use_keyword, CHR.ilws, @use_argument )
   .onMatch ( match ) =>
     [ keyword, { raw, value } ] = match
     return NEW.x_use_statement keyword, raw

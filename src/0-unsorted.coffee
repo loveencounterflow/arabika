@@ -18,7 +18,7 @@ echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
 π                         = require 'coffeenode-packrattle'
-WS                        = require './3-ws'
+CHR                       = require './3-chr'
 NUMBER                    = require './4-number'
 NEW                       = require './NEW'
 
@@ -47,10 +47,10 @@ NEW                       = require './NEW'
   not possible:
     addition    = π.seq expression, lws, plus, lws, expression
   ###
-  @addition        = ( π.seq ( => @expression ), WS.ilws, @plus,  WS.ilws, ( => @expression ) )
+  @addition        = ( π.seq ( => @expression ), CHR.ilws, @plus,  CHR.ilws, ( => @expression ) )
     .onMatch @_operation_on_match.bind @
 
-  @multiplication  = ( π.seq ( => @expression ), WS.ilws, @times, WS.ilws, ( => @expression ) )
+  @multiplication  = ( π.seq ( => @expression ), CHR.ilws, @times, CHR.ilws, ( => @expression ) )
     .onMatch @_operation_on_match.bind @
 
   @sum             = π.alt @addition, NUMBER.digits
@@ -61,17 +61,17 @@ NEW                       = require './NEW'
 
 
 
-  @list_kernel = ( π.repeatSeparated ( => @expression ), π [ ',', WS.ilws, ] )
+  @list_kernel = ( π.repeatSeparated ( => @expression ), π [ ',', CHR.ilws, ] )
     # .onMatch ( match ) -> [ 'long-sum', [ m for m in match when ( m[ 0 ] isnt 'operator' and m[ 1 ] isnt '+' ) ]..., ]
-  @empty_list  = ( π.seq '[', ( π.optional WS.ilws ), ']' )
+  @empty_list  = ( π.seq '[', ( π.optional CHR.ilws ), ']' )
     .onMatch ( match ) => [ 'list', ]
-  @filled_list = ( π.seq '[', WS.ilws, ( π.optional @list_kernel ), WS.ilws, ']' )
+  @filled_list = ( π.seq '[', CHR.ilws, ( π.optional @list_kernel ), CHR.ilws, ']' )
     .onMatch ( match ) => [ 'list', match[ 1 ]... ]
   @list = π.alt @empty_list, @filled_list
 
   ### TAINT does not respected escaped slashes, interpolations ###
   @identifier = ( π.regex /^[^0-9][^\s:]*/ )
     .onMatch ( match ) => [ 'identifier', match[ 0 ].split '/', ]
-  @assignment = ( π [ @identifier, ':', WS.ilws, @expression, ] )
+  @assignment = ( π [ @identifier, ':', CHR.ilws, @expression, ] )
     .onMatch ( match ) => [ 'assignment', match[ 0 ], match[ 2 ], ]
 
