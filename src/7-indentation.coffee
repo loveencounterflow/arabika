@@ -196,8 +196,8 @@ XRE                       = require './9-xre'
 @$new.$phrase = ( G, $ ) ->
   metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
   R         = π.alt -> π.regex /// [^ #{metachrs} ]+ ///
-  # R         = R.onMatch ( match ) -> [ 'phrase', match[ 0 ] ]
-  R         = R.onMatch ( match ) -> $new.literal 'phrase', match[ 0 ], match[ 0 ], match[ 0 ]
+  R         = R.onMatch ( match ) -> [ 'phrase', match[ 0 ] ]
+  # R         = R.onMatch ( match ) -> $new.literal 'phrase', match[ 0 ], match[ 0 ], match[ 0 ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------

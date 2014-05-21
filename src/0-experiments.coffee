@@ -169,15 +169,6 @@ check_nws = ->
   # debug test.throws ( -> parser.run material[ 0 ] ), /wrong/ # ok
   # try
 
-# #-----------------------------------------------------------------------------------------------------------
-# try_reduce = ->
-#   digits  = π.alt /[0-9]+/
-#   digits  = digits.onMatch ( match ) -> match[ 0 ]
-#   phrases = π.alt -> π.repeatSeparated digits, /,\s*/
-#   phrases = phrases.onMatch ( match ) -> [ 'phrases', match... ]
-#   # π.reduce
-#   debug phrases.run "7,5,3"
-
 #-----------------------------------------------------------------------------------------------------------
 try_splice = ->
   splice = ( me, you, idx = 0 ) ->
@@ -332,13 +323,48 @@ try_escodegen = ->
 #             value: 'log \'over\'' },
 #            ] } ] }
 
+#-----------------------------------------------------------------------------------------------------------
+try_reduce = ->
+  ### Parses nested structures.
+  * **meta-characters** are `<`, `=`, `>` (easy to type, not special in RegExes);
+  * **material characters** are code points that are not meta-characters;
+  * **phrase**: a contiguous sequence of material characters;
+  * **suite**
+  * **chunk**
+  * **block**
+  * **program**
+
+  Valid inputs include:
+
+  ````
+  <>
+  <1>
+  <1=2>
+  <1=2<3>>
+  <1=2<3<4>>
+  <1=2<3<4=5>>
+  <1=2<3<4=5>6>
+  <1=2<3<4=5>6=7>
+  ````
+
+  ###
+  accumulator = null
+  reducer     = null
+  phrase  = π.alt /[0-9]+/
+  phrase  = phrase.onMatch ( match ) -> match[ 0 ]
+  phrases = π.alt -> π.repeatSeparated phrase, /,\s*/
+  phrases = phrases.onMatch ( match ) -> [ 'phrases', match... ]
+  # π.reduce
+  debug phrases.run "7,5,3"
+
+
 
 ############################################################################################################
 unless module.parent?
   # check_nws()
-  # try_reduce()
+  try_reduce()
   # try_splice()
-  try_escodegen()
+  # try_escodegen()
 
 
 
