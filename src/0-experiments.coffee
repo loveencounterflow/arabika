@@ -325,37 +325,50 @@ try_escodegen = ->
 
 #-----------------------------------------------------------------------------------------------------------
 try_reduce = ->
-  ### Parses nested structures.
-  * **meta-characters** are `<`, `=`, `>` (easy to type, not special in RegExes);
-  * **material characters** are code points that are not meta-characters;
-  * **phrase**: a contiguous sequence of material characters;
-  * **suite**
-  * **chunk**
-  * **block**
-  * **program**
+  # ### Parses nested structures.
+  # * **meta-characters** are `<`, `=`, `>` (easy to type, not special in RegExes);
+  # * **material characters** are code points that are not meta-characters;
+  # * **phrase**: a contiguous sequence of material characters;
+  # * **suite**: a contiguous sequence of phrases;
+  # * **stage**: suites with a common parent; may include nested stages
+  # * **module**: the outermost stage of a given source.
 
-  Valid inputs include:
+  # # * **chunk**
+  # # * **block**
 
-  ````
-  <>
-  <1>
-  <1=2>
-  <1=2<3>>
-  <1=2<3<4>>
-  <1=2<3<4=5>>
-  <1=2<3<4=5>6>
-  <1=2<3<4=5>6=7>
-  ````
+  # Valid inputs include:
 
-  ###
-  accumulator = null
-  reducer     = null
-  phrase  = π.alt /[0-9]+/
-  phrase  = phrase.onMatch ( match ) -> match[ 0 ]
-  phrases = π.alt -> π.repeatSeparated phrase, /,\s*/
-  phrases = phrases.onMatch ( match ) -> [ 'phrases', match... ]
-  # π.reduce
-  debug phrases.run "7,5,3"
+  # ````
+  # <>
+  # <1>
+  # <1 = 2>
+  # <1 = 2 <3>>
+  # <1 = 2 <3 <4>>
+  # <1 = 2 <3 <4 = 5>>
+  # <1 = 2 <3 <4 = 5> 6>
+  # <1 = 2 <3 <4 = 5> 6 = 7>
+  # ````
+
+  # ###
+  # accumulator = null
+  # reducer     = null
+
+  # #---------------------------------------------------------------------------------------------------------
+  # phrase      = π.alt /[^<=>]+/
+  # phrase      = phrase.onMatch ( match ) -> match[ 0 ]
+
+  # #---------------------------------------------------------------------------------------------------------
+  # suite       = π.repeatSeparated phrase, /=/
+  # suite       = suite.onMatch ( match ) -> [ 'suite', match... ]
+
+  # #---------------------------------------------------------------------------------------------------------
+  # chunk       = π.alt ( -> suite ), ( -> stage )
+  # chunk       = chunk.onMatch ( match ) -> [ 'chunk', match... ]
+
+  # #---------------------------------------------------------------------------------------------------------
+  # stage       = π.seq /</, ( ), />/
+  # #---------------------------------------------------------------------------------------------------------
+  # debug suite.run "7,5,3"
 
 
 

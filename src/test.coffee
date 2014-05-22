@@ -60,16 +60,34 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
   throws: assert.throws.bind assert
 
 #-----------------------------------------------------------------------------------------------------------
+@_matches_filter = ( nr, module_name, matchers ) ->
+  return yes if matchers.length is 0
+  for matcher in matchers
+    return yes if matcher is "#{nr}"
+    return yes if matcher.test? and matcher.test module_name
+  return no
+
+#-----------------------------------------------------------------------------------------------------------
 @main = ->
   route_infos   = LOADER.get_route_infos all: yes
   route_count   = route_infos.length
+  skip_count    = 0
   test_count    = 0
   pass_count    = 0
   fail_count    = 0
   miss_count    = 0
+  matchers      = []
+  for m in process.argv[ 2 .. ]
+    unless /^[0-9]+$/.test m
+      m = new RegExp ".*#{BNP.escape_regex m}.*"
+    matchers.push m
   #.........................................................................................................
   for route_info in route_infos
     { route, name: module_name, nr } = route_info
+    unless @_matches_filter nr, module_name, matchers
+      warn "skipping #{nr}-#{module_name}"
+      skip_count += 1
+      continue
     info ( rpr nr ) + '-' + module_name
     module = require route
     #.......................................................................................................
@@ -92,12 +110,15 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
       pass_count += 1
       praise "#{locator}"
   #.........................................................................................................
-  info()
-  info    "Inspected #{route_count} modules;"
-  urge    "of these, #{miss_count} modules had no test cases."
+  whisper '-------------------------------------------------------------'
+  info    "Out of #{route_count} modules,"
+  warn    "skipped #{skip_count} modules;"
+  urge    "of the remaining #{route_count - skip_count} modules,"
+  urge    "#{miss_count} modules had no test cases."
   info    "Of #{test_count} tests in #{route_count - miss_count} modules,"
   praise  "#{pass_count} tests passed,"
   warn    "and #{fail_count} tests failed."
+  whisper '-------------------------------------------------------------'
   #.........................................................................................................
   return null
 
