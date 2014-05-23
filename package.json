@@ -1,6 +1,6 @@
 {
   "name": "arabika",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A language that compiles to JavaScript",
   "main": "lib/main.js",
   "scripts": {
