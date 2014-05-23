@@ -13,8 +13,8 @@ warn                      = TRM.get_logger 'warn',      badge
 help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
-π                         = require 'coffeenode-packrattle'
-NEW                       = require './NEW'
+ƒ                         = require 'flowmatic'
+$new                      = ƒ.new
 CHR                       = require './3-chr'
 NUMBER                    = require './4-number'
 TEXT                      = require './2-text'
@@ -27,27 +27,27 @@ XRE                       = require './9-xre'
   'use-keyword':    'use'
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@$_symbol_sigil    = π.alt => π.string @$[ 'symbol-sigil' ]
+### TAINT `ƒ.or` is an expedient here ###
+@$_symbol_sigil    = ƒ.or => ƒ.string @$[ 'symbol-sigil' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@symbol           = ( π.seq @$_symbol_sigil, CHR.nws )
+@symbol           = ( ƒ.seq @$_symbol_sigil, CHR.nws )
   .onMatch ( match ) =>
     [ sigil, { raw, value } ] = match
-    return NEW.literal 'symbol', sigil + raw, value
+    return $new.literal 'symbol', sigil + raw, value
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@$_use_keyword     = π.alt => π.string @$[ 'use-keyword' ]
+### TAINT `ƒ.or` is an expedient here ###
+@$_use_keyword     = ƒ.or => ƒ.string @$[ 'use-keyword' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@use_argument     = π.alt @symbol, NUMBER.digits, TEXT.literal
+@use_argument     = ƒ.or @symbol, NUMBER.digits, TEXT.literal
 
 #-----------------------------------------------------------------------------------------------------------
-@use_statement    = ( π.seq @$_use_keyword, CHR.ilws, @use_argument )
+@use_statement    = ( ƒ.seq @$_use_keyword, CHR.ilws, @use_argument )
   .onMatch ( match ) =>
     [ keyword, { raw, value } ] = match
-    return NEW.x_use_statement keyword, raw
+    return $new.x_use_statement keyword, raw
 
 
 #===========================================================================================================
@@ -70,17 +70,17 @@ XRE                       = require './9-xre'
       "#{sigil}Supercalifragilisticexpialidocious" ]
     #.......................................................................................................
     for probe in probes
-      test.eq ( @symbol.run probe ), ( NEW.literal 'symbol', probe, probe[ 1 .. ] )
+      test.eq ( @symbol.run probe ), ( $new.literal 'symbol', probe, probe[ 1 .. ] )
 
   #---------------------------------------------------------------------------------------------------------
   'use_argument: accepts symbols, digits, strings': ( test ) ->
     sigil = @$[ 'symbol-sigil' ]
     probes_and_results = [
-      [ "#{sigil}x",      NEW.literal 'symbol', "#{sigil}x",   "x" ]
-      [ "#{sigil}foo",    NEW.literal 'symbol', "#{sigil}foo", "foo" ]
-      [ "12349876",       NEW.literal 'digits', "12349876", "12349876" ]
-      [ "'some text'",    NEW.literal 'text', "'some text'", "some text" ]
-      [ '"other text"' ,  NEW.literal 'text', '"other text"', 'other text' ]
+      [ "#{sigil}x",      $new.literal 'symbol', "#{sigil}x",   "x" ]
+      [ "#{sigil}foo",    $new.literal 'symbol', "#{sigil}foo", "foo" ]
+      [ "12349876",       $new.literal 'digits', "12349876", "12349876" ]
+      [ "'some text'",    $new.literal 'text', "'some text'", "some text" ]
+      [ '"other text"' ,  $new.literal 'text', '"other text"', 'other text' ]
       ]
     #.......................................................................................................
     for [ probe, result, ] in probes_and_results
@@ -91,11 +91,11 @@ XRE                       = require './9-xre'
     sigil   = @$[ 'symbol-sigil' ]
     keyword = @$[ 'use-keyword' ]
     probes_and_results = [
-      [ "use #{sigil}x",      NEW.x_use_statement keyword, "#{sigil}x",   "x" ]
-      [ "use #{sigil}foo",    NEW.x_use_statement keyword, "#{sigil}foo", "foo" ]
-      [ "use 12349876",       NEW.x_use_statement keyword, "12349876", "12349876" ]
-      [ "use 'some text'",    NEW.x_use_statement keyword, "'some text'", "some text" ]
-      [ 'use "other text"' ,  NEW.x_use_statement keyword, '"other text"', 'other text' ]
+      [ "use #{sigil}x",      $new.x_use_statement keyword, "#{sigil}x",   "x" ]
+      [ "use #{sigil}foo",    $new.x_use_statement keyword, "#{sigil}foo", "foo" ]
+      [ "use 12349876",       $new.x_use_statement keyword, "12349876", "12349876" ]
+      [ "use 'some text'",    $new.x_use_statement keyword, "'some text'", "some text" ]
+      [ 'use "other text"' ,  $new.x_use_statement keyword, '"other text"', 'other text' ]
       ]
     #.......................................................................................................
     for [ probe, result, ] in probes_and_results

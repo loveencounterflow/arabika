@@ -17,9 +17,9 @@ help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
-π                         = require 'coffeenode-packrattle'
 BNP                       = require 'coffeenode-bitsnpieces'
-NEW                       = require './NEW'
+# ƒ                         = require 'flowmatic'
+# $new                      = ƒ.new
 #...........................................................................................................
 ### See:
   https://github.com/loveencounterflow/xregexp3
@@ -94,6 +94,8 @@ module.exports = XRE = ( P... ) ->
   return XRegExp P...
 # #...........................................................................................................
 # XRE.new = XRE.bind XRE
+# throw '####################################'
+# debug (require 'coffeenode-types').type_of XRE
 
 #-----------------------------------------------------------------------------------------------------------
 XRE.$esc = BNP.escape_regex.bind BNP

@@ -17,9 +17,9 @@ help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
-π                         = require 'coffeenode-packrattle'
 BNP                       = require 'coffeenode-bitsnpieces'
-NEW                       = require './NEW'
+ƒ                         = require 'flowmatic'
+$new                      = ƒ.new
 CHR                       = require './3-chr'
 XRE                       = require './9-xre'
 
@@ -39,57 +39,57 @@ XRE                       = require './9-xre'
 
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@$_sq = π.alt => π.string @$_constants[ 'single-quote' ]
+### TAINT `ƒ.or` is an expedient here ###
+@$_sq = ƒ.or => ƒ.string @$_constants[ 'single-quote' ]
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@$_dq = π.alt => π.string @$_constants[ 'double-quote' ]
+### TAINT `ƒ.or` is an expedient here ###
+@$_dq = ƒ.or => ƒ.string @$_constants[ 'double-quote' ]
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT escapes on each call; no memoizing ###
-@$_nosq = ( π.repeat => π.alt @$_escaped, /// [^ #{BNP.escape_regex @$_constants[ 'single-quote' ]} ] /// )
+@$_nosq = ( ƒ.repeat => ƒ.or @$_escaped, /// [^ #{BNP.escape_regex @$_constants[ 'single-quote' ]} ] /// )
   .onMatch ( match ) -> ( submatch[ 0 ] for submatch in match ).join ''
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT escapes on each call; no memoizing ###
-@$_nodq = ( π.repeat => π.alt @$_escaped, /// [^ #{BNP.escape_regex @$_constants[ 'double-quote' ]} ] /// )
+@$_nodq = ( ƒ.repeat => ƒ.or @$_escaped, /// [^ #{BNP.escape_regex @$_constants[ 'double-quote' ]} ] /// )
   .onMatch ( match ) -> ( submatch[ 0 ] for submatch in match ).join ''
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@$_chr_escaper = π.alt => π.string @$_constants[ 'chr-escaper' ]
+### TAINT `ƒ.or` is an expedient here ###
+@$_chr_escaper = ƒ.or => ƒ.string @$_constants[ 'chr-escaper' ]
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@$_unicode4_metachr = π.alt => π.string @$_constants[ 'unicode4-metachr' ]
+### TAINT `ƒ.or` is an expedient here ###
+@$_unicode4_metachr = ƒ.or => ƒ.string @$_constants[ 'unicode4-metachr' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@$_sq_literal = π.seq @$_sq, @$_nosq, @$_sq
+@$_sq_literal = ƒ.seq @$_sq, @$_nosq, @$_sq
 
 #-----------------------------------------------------------------------------------------------------------
-@$_dq_literal = π.seq @$_dq, @$_nodq, @$_dq
+@$_dq_literal = ƒ.seq @$_dq, @$_nodq, @$_dq
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@$_simple_escape = ( π.alt => π.regex /[bfnrt]/ )
+### TAINT `ƒ.or` is an expedient here ###
+@$_simple_escape = ( ƒ.or => ƒ.regex /[bfnrt]/ )
   .onMatch ( match ) => @$_constants[ 'escape-table' ][ match[ 0 ] ]
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT String conversion method dubious; will fail outside of Unicode BMP ###
-@$_unicode_hex = ( π.seq @$_unicode4_metachr, /[0-9a-fA-F]{4}/ )
+@$_unicode_hex = ( ƒ.seq @$_unicode4_metachr, /[0-9a-fA-F]{4}/ )
   .onMatch ( match ) => String.fromCharCode '0x' + match[ 1 ]
 
 #-----------------------------------------------------------------------------------------------------------
-@$_escaped = ( π.seq @$_chr_escaper, ( π.alt @$_simple_escape, @$_unicode_hex, @_chr ) )
+@$_escaped = ( ƒ.seq @$_chr_escaper, ( ƒ.or @$_simple_escape, @$_unicode_hex, @_chr ) )
   .onMatch ( match ) => match[ 1 ]
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT maybe we should *not* un-escape anything; better for translation ###
-@literal          = ( π.alt @$_sq_literal, @$_dq_literal )
+@literal          = ( ƒ.or @$_sq_literal, @$_dq_literal )
   .onMatch ( match ) =>
     [ ignore, value, ignore, ] = match
-    return NEW.literal 'text', ( match.join '' ), value
+    return $new.literal 'text', ( match.join '' ), value
 
 
 #===========================================================================================================

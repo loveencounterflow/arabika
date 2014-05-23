@@ -36,10 +36,10 @@ help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
-π                         = require 'coffeenode-packrattle'
 BNP                       = require 'coffeenode-bitsnpieces'
+ƒ                         = require 'flowmatic'
+$new                      = ƒ.new
 XRE                       = require './9-xre'
-$new                      = require './NEW'
 
 
 #-----------------------------------------------------------------------------------------------------------
@@ -61,25 +61,25 @@ $new                      = require './NEW'
 @$new.$suite = ( G, $ ) ->
   # metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
   metachrs  = XRE.$esc $[ 'opener' ] + $[ 'closer' ]
-  R         = π.repeatSeparated /// [^ #{metachrs} ]+ ///, $[ 'connector' ]
+  R         = ƒ.repeatSeparated /// [^ #{metachrs} ]+ ///, $[ 'connector' ]
   R         = R.onMatch ( match ) -> match.join $[ 'connector' ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$stage = ( G, $ ) ->
-  R = π.seq $[ 'opener' ], ( -> G.$chunks ), $[ 'closer' ]
+  R = ƒ.seq $[ 'opener' ], ( -> G.$chunks ), $[ 'closer' ]
   R = R.onMatch ( match ) -> match[ 1 ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$chunk = ( G, $ ) ->
-  R = π.alt ( -> G.$suite ), ( -> G.$stage )
+  R = ƒ.or ( -> G.$suite ), ( -> G.$stage )
   # R = R.onMatch ( match ) -> [ 'chunk', match..., ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$chunks = ( G, $ ) ->
-  R = π.repeat ( -> G.$chunk ), 1
+  R = ƒ.repeat ( -> G.$chunk ), 1
   #.........................................................................................................
   R = R.onMatch ( match ) ->
     return match if $[ 'join-suites' ]
@@ -95,7 +95,7 @@ $new                      = require './NEW'
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$module = ( G, $ ) ->
-  R = π.seq ( -> G.$chunk ), π.end
+  R = ƒ.seq ( -> G.$chunk ), ƒ.end
   R = R.onMatch ( match ) -> match[ 0 ]
   return R
 
@@ -107,7 +107,7 @@ $new                      = require './NEW'
 @$new @, null
 
 #-----------------------------------------------------------------------------------------------------------
-# @suite = π.seq ( => @$[ 'opener' ] ), '\n',
+# @suite = ƒ.seq ( => @$[ 'opener' ] ), '\n',
 
 
 #===========================================================================================================

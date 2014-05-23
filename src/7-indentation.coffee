@@ -33,13 +33,10 @@ help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 rainbow                   = TRM.rainbow.bind TRM
 #...........................................................................................................
-π                         = require 'coffeenode-packrattle'
-# BNP                       = require 'coffeenode-bitsnpieces'
-$new                      = require './NEW'
+ƒ                         = require 'flowmatic'
+$new                      = ƒ.new
 CHR                       = require './3-chr'
 XRE                       = require './9-xre'
-
-
 
 
 
@@ -101,14 +98,14 @@ XRE                       = require './9-xre'
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT must parameterize ###
 @$new.$_indentation = ( G, $ ) ->
-  R = π.alt -> ( π.repeat ' ' )
+  R = ƒ.or -> ( ƒ.repeat ' ' )
   R = R.onMatch ( match ) -> return match.join ''
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT naive line ending ###
 @$new.$_raw_indented_material_line = ( G, $ ) ->
-  R = π.alt -> ( π.seq G.$_indentation, CHR.$nws, /.*/ , π.optional '\n' )
+  R = ƒ.or -> ( ƒ.seq G.$_indentation, CHR.$nws, /.*/ , ƒ.optional '\n' )
   R = R.onMatch ( match ) ->
     [ indentation, first_chr, rest, nl, ] = match
     material                              = first_chr[ 0 ] + rest[ 0 ]
@@ -119,24 +116,24 @@ XRE                       = require './9-xre'
 ### TAINT must parameterize ###
 ### TAINT naive whitespace definition; use CHR ###
 @$new.$_raw_blank_line = ( G, $ ) ->
-  R = ( π.regex /([\x20\t]+)(\n|$)/ )
+  R = ( ƒ.regex /([\x20\t]+)(\n|$)/ )
   R = R.onMatch ( match ) -> return [ '', match[ 1 ], match[ 2 ] ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$_raw_line = ( G, $ ) ->
-  return ( π.alt ( -> G.$_raw_blank_line ), ( -> G.$_raw_indented_material_line ) )
+  return ( ƒ.or ( -> G.$_raw_blank_line ), ( -> G.$_raw_indented_material_line ) )
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$_raw_lines = ( G, $ ) ->
-  return π.repeat -> G.$_raw_line
+  return ƒ.repeat -> G.$_raw_line
 
 # #-----------------------------------------------------------------------------------------------------------
 # ### used to issue warning in case metachrs appear in source ###
 # @$new.$_metachrs = ( G, $ ) ->
 #   ### TAINT code duplication: same escaped metachrs used in `$phrase` ###
 #   metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
-#   R = π.alt ( π.seq /[\s\S]*/, /// [ #{metachrs} ] ///, /[\s\S]*/ ), /[\s\S]*/
+#   R = ƒ.or ( ƒ.seq /[\s\S]*/, /// [ #{metachrs} ] ///, /[\s\S]*/ ), /[\s\S]*/
 #   R = R.onMatch ( match, state ) ->
 #     debug match
 #     return match
@@ -211,25 +208,25 @@ XRE                       = require './9-xre'
 @$new.$suite = ( G, $ ) ->
   # metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
   metachrs  = XRE.$esc $[ 'opener' ] + $[ 'closer' ]
-  R         = π.repeatSeparated /// [^ #{metachrs} ]+ ///, $[ 'connector' ]
+  R         = ƒ.repeatSeparated /// [^ #{metachrs} ]+ ///, $[ 'connector' ]
   R         = R.onMatch ( match ) -> match.join $[ 'connector' ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$stage = ( G, $ ) ->
-  R = π.seq $[ 'opener' ], ( -> G.$chunks ), $[ 'closer' ]
+  R = ƒ.seq $[ 'opener' ], ( -> G.$chunks ), $[ 'closer' ]
   R = R.onMatch ( match ) -> match[ 1 ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$chunk = ( G, $ ) ->
-  R = π.alt ( -> G.$suite ), ( -> G.$stage )
+  R = ƒ.or ( -> G.$suite ), ( -> G.$stage )
   # R = R.onMatch ( match ) -> [ 'chunk', match..., ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$chunks = ( G, $ ) ->
-  R = π.repeat ( -> G.$chunk ), 1
+  R = ƒ.repeat ( -> G.$chunk ), 1
   #.........................................................................................................
   R = R.onMatch ( match ) ->
     return match if $[ 'join-suites' ]
@@ -249,7 +246,7 @@ XRE                       = require './9-xre'
 #-----------------------------------------------------------------------------------------------------------
 @$new.$module = ( G, $ ) ->
   ### Same as `$chunk`, but accepts indented source. ###
-  R = π.seq ( -> G.$chunk ), π.end
+  R = ƒ.seq ( -> G.$chunk ), ƒ.end
   R = R.transform ( text ) -> G.$_as_bracketed text
   R = R.onMatch ( match ) -> match[ 0 ]
   return R

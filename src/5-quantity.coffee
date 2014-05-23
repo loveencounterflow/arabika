@@ -16,10 +16,9 @@ warn                      = TRM.get_logger 'warn',      badge
 help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
-π                         = require 'coffeenode-packrattle'
-# BASE                      = require './1-base'
+ƒ                         = require 'flowmatic'
+$new                      = ƒ.new
 NUMBER                    = require './4-number'
-NEW                       = require './NEW'
 
 
 #-----------------------------------------------------------------------------------------------------------

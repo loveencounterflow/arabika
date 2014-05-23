@@ -20,7 +20,8 @@ rainbow                   = TRM.rainbow.bind TRM
 π                         = require 'coffeenode-packrattle'
 CHR                       = require './3-chr'
 NUMBER                    = require './4-number'
-NEW                       = require './NEW'
+FLOWMATIC                 = require 'flowmatic'
+$new                      = FLOWMATIC.new
 
 @_ = ->
 

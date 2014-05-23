@@ -12,11 +12,12 @@ warn                      = TRM.get_logger 'warn',      badge
 help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
-π                         = require 'coffeenode-packrattle'
 BNP                       = require 'coffeenode-bitsnpieces'
-NEW                       = require './NEW'
+ƒ                         = require 'flowmatic'
+$new                      = ƒ.new
 XRE                       = require './9-xre'
-
+# debug (require 'coffeenode-types').type_of XRE
+# process.exit()
 
 #-----------------------------------------------------------------------------------------------------------
 @$_constants =
@@ -34,43 +35,43 @@ XRE                       = require './9-xre'
 
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
+### TAINT `ƒ.or` is an expedient here ###
 ### TAINT no memoizing ###
-@$_ascii_punctuation = π.alt =>
-  π.regex XRE '[' + ( XRE.$esc @$_constants[ 'ascii-punctuation' ] ) + ']'
+@$_ascii_punctuation = ƒ.or =>
+  ƒ.regex XRE '[' + ( XRE.$esc @$_constants[ 'ascii-punctuation' ] ) + ']'
 
 #-----------------------------------------------------------------------------------------------------------
-@$_chr = ( π.regex XRE '.', 'Qs' )
+@$_chr = ( ƒ.regex XRE '.', 'Qs' )
   .onMatch ( match ) -> match[ 0 ]
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@chr =  ( π.alt @$_chr )
-  .onMatch ( match ) -> NEW.literal 'chr', match, match
+### TAINT `ƒ.or` is an expedient here ###
+@chr =  ( ƒ.or @$_chr )
+  .onMatch ( match ) -> $new.literal 'chr', match, match
 
 
 #===========================================================================================================
 # WHITESPACE
 #-----------------------------------------------------------------------------------------------------------
 ### Linear WhiteSpace ###
-@lws = ( π.regex /\x20+/ )
-  .onMatch ( match ) -> return NEW.literal 'lws', match[ 0 ], match[ 0 ]
+@lws = ( ƒ.regex /\x20+/ )
+  .onMatch ( match ) -> return $new.literal 'lws', match[ 0 ], match[ 0 ]
 
 #-----------------------------------------------------------------------------------------------------------
 ### invisible LWS ###
-@ilws = π.drop π.regex /\x20+/
+@ilws = ƒ.drop ƒ.regex /\x20+/
 
 #-----------------------------------------------------------------------------------------------------------
 ### no WhiteSpace ###
-@$nws = ( π.regex /[^\s\x85]+/ )
+@$nws = ( ƒ.regex /[^\s\x85]+/ )
 ### TAINT better way to chain methods? ###
-@nws = @$nws.onMatch ( match ) => NEW.literal 'nws', match[ 0 ], match[ 0 ]
+@nws = @$nws.onMatch ( match ) => $new.literal 'nws', match[ 0 ], match[ 0 ]
 @nws = @nws.describe "no-whitespace"
 
 #-----------------------------------------------------------------------------------------------------------
 ### Unicode line endings: ###
 @$nl_re = /// \r\n | [\n\v\f\r\x85\u2028\u2029] ///g
-@$nl    = π.regex @$nl_re
+@$nl    = ƒ.regex @$nl_re
 
 
 #===========================================================================================================
@@ -87,10 +88,10 @@ XRE                       = require './9-xre'
 
   #---------------------------------------------------------------------------------------------------------
   'chr: matches code points (instead of code units) and newlines': ( test ) ->
-    test.eq ( @chr.run 'x'  ), NEW.literal 'chr', 'x', 'x'
-    test.eq ( @chr.run '\r' ), NEW.literal 'chr', '\r', '\r'
-    test.eq ( @chr.run '\n' ), NEW.literal 'chr', '\n', '\n'
-    test.eq ( @chr.run '𠀝'  ), NEW.literal 'chr', '𠀝', '𠀝'
+    test.eq ( @chr.run 'x'  ), $new.literal 'chr', 'x', 'x'
+    test.eq ( @chr.run '\r' ), $new.literal 'chr', '\r', '\r'
+    test.eq ( @chr.run '\n' ), $new.literal 'chr', '\n', '\n'
+    test.eq ( @chr.run '𠀝'  ), $new.literal 'chr', '𠀝', '𠀝'
 
   #---------------------------------------------------------------------------------------------------------
   '$chr: accepts single character, be it one or two code units': ( test ) ->
@@ -151,13 +152,13 @@ XRE                       = require './9-xre'
       "中國皇帝🚂" ]
     #.......................................................................................................
     for probe in probes
-      test.eq ( @nws.run probe ), ( NEW.literal 'nws', probe, probe )
+      test.eq ( @nws.run probe ), ( $new.literal 'nws', probe, probe )
 
   #---------------------------------------------------------------------------------------------------------
   'lws: accepts sequences of U+0020': ( test ) ->
     probes = [ ' ', '        ', ]
     for probe in probes
-      test.eq ( @lws.run probe ), ( NEW.literal 'lws', probe, probe )
+      test.eq ( @lws.run probe ), ( $new.literal 'lws', probe, probe )
 
   #---------------------------------------------------------------------------------------------------------
   'ilws: accepts and drops sequences of U+0020': ( test ) ->

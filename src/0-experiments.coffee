@@ -23,7 +23,7 @@ glob                      = require 'glob'
 forked from https://github.com/robey/packrattle ###
 π                         = require 'coffeenode-packrattle'
 #...........................................................................................................
-A                         = require './main'
+# A                         = require './main'
 
 
 @_ = ->

@@ -16,24 +16,24 @@ warn                      = TRM.get_logger 'warn',      badge
 help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
-π                         = require 'coffeenode-packrattle'
-NEW                       = require './NEW'
+ƒ                         = require 'flowmatic'
+$new                      = ƒ.new
 
 
 #-----------------------------------------------------------------------------------------------------------
-@digits = ( π.regex /[0-9]+/ )
-  .onMatch ( match ) => NEW.literal 'digits', match[ 0 ], match[ 0 ]
+@digits = ( ƒ.regex /[0-9]+/ )
+  .onMatch ( match ) => $new.literal 'digits', match[ 0 ], match[ 0 ]
 
 #-----------------------------------------------------------------------------------------------------------
-### TAINT `π.alt` is an expedient here ###
-@integer = ( π.alt @digits )
+### TAINT `ƒ.or` is an expedient here ###
+@integer = ( ƒ.or @digits )
   .onMatch ( match ) =>
     match[ 'x-subtype'  ] = 'integer'
     match[ 'value'      ] = parseInt match[ 'raw' ], 10
     return match
 
 #-----------------------------------------------------------------------------------------------------------
-@literal = π.alt @integer
+@literal = ƒ.or @integer
 
 
 
@@ -45,7 +45,7 @@ NEW                       = require './NEW'
   #---------------------------------------------------------------------------------------------------------
   'digits: parses sequences of ASCII digits': ( test ) ->
     for probe in """0 12 7 1928374 080""".split /\s+/
-      test.eq ( @digits.run probe ), ( NEW.literal 'digits', probe, probe )
+      test.eq ( @digits.run probe ), ( $new.literal 'digits', probe, probe )
 
   #---------------------------------------------------------------------------------------------------------
   'digits: does not parse sequences with non-digits (1)': ( test ) ->
@@ -60,12 +60,12 @@ NEW                       = require './NEW'
   #---------------------------------------------------------------------------------------------------------
   'integer: parses sequences of ASCII digits': ( test ) ->
     for probe in """0 12 7 1928374 080""".split /\s+/
-      test.eq ( @integer.run probe ), ( NEW.literal 'integer', probe, parseInt probe, 10 )
+      test.eq ( @integer.run probe ), ( $new.literal 'integer', probe, parseInt probe, 10 )
 
   #---------------------------------------------------------------------------------------------------------
   'number: recognizes integers': ( test ) ->
     for probe in """0 12 7 1928374 080""".split /\s+/
-      test.eq ( @literal.run probe ), ( NEW.literal 'integer', probe, parseInt probe, 10 )
+      test.eq ( @literal.run probe ), ( $new.literal 'integer', probe, parseInt probe, 10 )
 
   #---------------------------------------------------------------------------------------------------------
   'number: compiles integers to JS': ( test ) ->
