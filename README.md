@@ -1,4 +1,4 @@
-![](https://github.com/loveencounterflow/FLOWMATIC/raw/master/artwork/flowmatic-logo-4a.png)
+![](https://github.com/loveencounterflow/arabika/raw/master/art/arabika-logo-3.png)
 
 
 - [Arabika](#arabika)
