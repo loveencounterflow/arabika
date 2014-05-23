@@ -37,6 +37,11 @@ XRE                       = require './9-xre'
 
 #-----------------------------------------------------------------------------------------------------------
 @$ =
+  ### When `true`, suites are single strings that represent lines separated by `connector`; when `false`,
+  suites are lists with lines as elements: ###
+  # 'join-suites':        yes
+  'join-suites':        no
+
   #.........................................................................................................
   'opener':             '【'
   'connector':          '〓'
@@ -193,79 +198,57 @@ XRE                       = require './9-xre'
 #===========================================================================================================
 # PARSING BRACKETED INTERMEDIATE REPRESENTATION
 #-----------------------------------------------------------------------------------------------------------
-@$new.$phrase = ( G, $ ) ->
-  metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
-  R         = π.alt -> π.regex /// [^ #{metachrs} ]+ ///
-  R         = R.onMatch ( match ) -> [ 'phrase', match[ 0 ] ]
-  # R         = R.onMatch ( match ) -> $new.literal 'phrase', match[ 0 ], match[ 0 ], match[ 0 ]
+@$new.$suite = ( G, $ ) ->
+  # metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
+  metachrs  = XRE.$esc $[ 'opener' ] + $[ 'closer' ]
+  R         = π.repeatSeparated /// [^ #{metachrs} ]+ ///, $[ 'connector' ]
+  R         = R.onMatch ( match ) -> match.join $[ 'connector' ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.$phrases = ( G, $ ) ->
-  R = π.alt -> π.repeatSeparated G.$phrase, /// #{XRE.$esc $[ 'connector' ]} ///
-  R = R.onMatch ( match ) -> [ 'phrases', match... ]
+@$new.$stage = ( G, $ ) ->
+  R = π.seq $[ 'opener' ], ( -> G.$chunks ), $[ 'closer' ]
+  R = R.onMatch ( match ) -> match[ 1 ]
   return R
 
-# #-----------------------------------------------------------------------------------------------------------
-# @$new.$phrases = ( G, $ ) ->
-#   accumulator = null
-#   reducer     = null
-#   R = π.reduce ( -> G.$phrase ), /// #{XRE.$esc $[ 'connector' ]} /// #, accumulator, reducer
-#   R = R.onMatch ( match ) -> debug match; [ 'phrases', match... ]; return match
-#   return R
-
 #-----------------------------------------------------------------------------------------------------------
-@$new.suite = ( G, $ ) ->
-  R = π.alt -> π.seq $[ 'opener' ], ( -> G.$chunks ), $[ 'closer' ]
-  # R = R.onMatch ( match ) -> [ 'bracketed', match[ 0 ], match[ 1 ], match[ 2 ], ]
-  R = R.onMatch ( match ) ->
-    kernel  = match[ 1 ]
-    # kernel[ '*' ] = 1
-    # whisper '©897', kernel
-    # whisper '©897', kernel
-    # kernel  = flatten_kernel match[ 1 ]
-    return $new.block_statement 'suite', kernel
+@$new.$chunk = ( G, $ ) ->
+  R = π.alt ( -> G.$suite ), ( -> G.$stage )
+  # R = R.onMatch ( match ) -> [ 'chunk', match..., ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$chunks = ( G, $ ) ->
-  R = π.alt ( π.repeat => G.$chunk )
+  R = π.repeat ( -> G.$chunk ), 1
+  #.........................................................................................................
   R = R.onMatch ( match ) ->
-    # match.unshift 'chunks'
-    kernel = []
+    return match if $[ 'join-suites' ]
+    RR = []
     for element in match
-      if ( TYPES.isa_list element ) and element[ 0 ] is 'phrases'
-        element.shift()
-        for sub_element in element
-          kernel.push sub_element
+      if TYPES.isa_text element
+        RR.splice RR.length, 0, ( element.split $[ 'connector' ] )...
       else
-        kernel.push element
-    # whisper '©442b', kernel
-    return kernel
+        RR.push element
+    return RR
+  #.........................................................................................................
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-splice = ( me, you, idx = 0 ) ->
-  ### TAINT `splice` is not too good a name for this functionality i guess ###
-  ### thx to http://stackoverflow.com/a/12190006/256361 ###
-  Array::splice.apply me, [ idx, 0, ].concat you
-  return me
-
-#-----------------------------------------------------------------------------------------------------------
-@$new.$chunk = ( G, $ ) ->
-  R = π.alt ( -> G.suite ), ( -> G.$phrases )
-  # R = R.onMatch ( match ) -> [ 'chunk', match... ]
-  return R
-
-#-----------------------------------------------------------------------------------------------------------
-@$new.expression = ( G, $ ) ->
-  R = π.alt -> G.$chunk
+@$new.$module = ( G, $ ) ->
+  R = π.seq ( -> G.$chunk ), π.end
   R = R.transform ( text ) -> G.$_as_bracketed text
-  # R = R.transform ( text ) -> text
-  R = R.onMatch ( match, state ) ->
-    debug match
-    return match
+  R = R.onMatch ( match ) -> match[ 0 ]
   return R
+
+# #-----------------------------------------------------------------------------------------------------------
+# @$new.expression = ( G, $ ) ->
+#   R = π.alt -> G.$chunk
+#   R = R.transform ( text ) -> G.$_as_bracketed text
+#   # R = R.transform ( text ) -> text
+#   R = R.onMatch ( match, state ) ->
+#     debug match
+#     return match
+#   return R
 
 
 #===========================================================================================================
@@ -279,152 +262,174 @@ splice = ( me, you, idx = 0 ) ->
 @$TESTS =
 
   #---------------------------------------------------------------------------------------------------------
-  'bracketed: parses simple bracketed phrase': ( test ) ->
-    G       = @$new opener: '(', connector: '|', closer: ')'
-    source  = """(xxx)"""
-    # test.eq ( G.suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
-    test.eq ( G.suite.run source ), {"type":"BlockStatement","x-subtype":"suite","body":[{"type":"ExpressionStatement","x-subtype":"auto","expression":{"type":"Literal","x-subtype":"phrase","x-verbatim":"xxx","raw":"xxx","value":"xxx"}}]}
+  '$suite: parses phrases joined by connector (1)': ( test ) ->
+    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
+    source  = 'abc=def=ghi'
+    # debug G.$suite.run source
+    test.eq ( G.$suite.run source ), 'abc=def=ghi'
 
   #---------------------------------------------------------------------------------------------------------
-  'bracketed: parses nested bracketed phrase': ( test ) ->
-    G       = @$new opener: '(', connector: '|', closer: ')'
-    source  = """(A(B)C)"""
-    test.eq ( G.suite.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
+  '$suite: parses phrases joined by connector (2)': ( test ) ->
+    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+    source  = 'abc=def=ghi'
+    # debug G.$suite.run source
+    test.eq ( G.$suite.run source ), 'abc=def=ghi'
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'bracketed: parses multiply nested bracketed phrase': ( test ) ->
-  #   G       = @$new opener: '(', connector: '|', closer: ')'
-  #   source  = """(xxx(yyy(zzz))aaa)"""
-  #   test.eq ( G.suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$chunk: parses simple bracketed expression (1)': ( test ) ->
+    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
+    source  = '<abc=def=ghi>'
+    # debug G.$chunk.run source
+    test.eq ( G.$chunk.run source ), [ 'abc', 'def', 'ghi', ]
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'bracketed: parses multiply nested bracketed phrase with connectors': ( test ) ->
-  #   G       = @$new opener: '(', connector: '|', closer: ')'
-  #   source  = """(xxx|www|333(yyy(zzz))aaa)"""
-  #   test.eq ( G.suite.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$chunk: parses simple bracketed expression (2)': ( test ) ->
+    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+    source  = '<abc=def=ghi>'
+    # debug G.$chunk.run source
+    test.eq ( G.$chunk.run source ), [ 'abc=def=ghi', ]
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'expression: parses simple bracketed phrase': ( test ) ->
-  #   G       = @$new opener: '(', connector: '|', closer: ')'
-  #   source  = """(xxx)"""
-  #   test.eq ( G.$chunk.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$chunk: parses nested bracketed expression (1)': ( test ) ->
+    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
+    source  = '<abc=def<ghi<jkl=mno>>pqr>'
+    # debug G.$chunk.run source
+    test.eq ( G.$chunk.run source ), [ 'abc', 'def', [ 'ghi', [ 'jkl', 'mno', ] ], 'pqr', ]
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'expression: parses nested bracketed phrase': ( test ) ->
-  #   G       = @$new opener: '(', connector: '|', closer: ')'
-  #   source  = """(A(B)C)"""
-  #   test.eq ( G.$chunk.run source ), ["bracketed","(",[["phrases",["phrase","A"]],["bracketed","(",[["phrases",["phrase","B"]]],")"],["phrases",["phrase","C"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$chunk: parses nested bracketed expression (2)': ( test ) ->
+    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+    source  = '<abc=def<ghi<jkl=mno>>pqr>'
+    # debug G.$chunk.run source
+    test.eq ( G.$chunk.run source ), [ 'abc=def', [ 'ghi', [ 'jkl=mno', ] ], 'pqr', ]
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'expression: parses multiply nested bracketed phrase': ( test ) ->
-  #   G       = @$new opener: '(', connector: '|', closer: ')'
-  #   source  = """(xxx(yyy(zzz))aaa)"""
-  #   test.eq ( G.$chunk.run source ), ["bracketed","(",[["phrases",["phrase","xxx"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$module: parses indented source (1)': ( test ) ->
+    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
+    source  = """
+    abc
+    def
+      ghi
+        jkl
+        mno
+    pqr
+    """
+    # debug G.$module.run source
+    test.eq ( G.$module.run source ), [ 'abc', 'def', [ 'ghi', [ 'jkl', 'mno', ] ], 'pqr', ]
 
-  # #---------------------------------------------------------------------------------------------------------
-  # 'expression: parses multiply nested bracketed phrase with connectors': ( test ) ->
-  #   G       = @$new opener: '(', connector: '|', closer: ')'
-  #   source  = """(xxx|www|333(yyy(zzz))aaa)"""
-  #   test.eq ( G.$chunk.run source ), ["bracketed","(",[["phrases",["phrase","xxx"],["phrase","www"],["phrase","333"]],["bracketed","(",[["phrases",["phrase","yyy"]],["bracketed","(",[["phrases",["phrase","zzz"]]],")"]],")"],["phrases",["phrase","aaa"]]],")"]
+  #---------------------------------------------------------------------------------------------------------
+  '$module: parses indented source (2)': ( test ) ->
+    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+    source  = """
+    abc
+    def
+      ghi
+        jkl
+        mno
+    pqr
+    """
+    # debug G.$module.run source
+    test.eq ( G.$module.run source ), [ 'abc=def', [ 'ghi', [ 'jkl=mno', ] ], 'pqr', ]
 
-  # #---------------------------------------------------------------------------------------------------------
-  # '$_raw_lines: turns indented source into list of triplets': ( test ) ->
-  #   G       = @
-  #   source  = """
-  #   f = ->
-  #     for x in xs
-  #       while x > 0
-  #         x -= 1
-  #         log x
-  #         g x
-  #     log 'ok'
-  #     log 'over'
-  #   """
-  #   lines = G.$_raw_lines.run source
-  #   # debug JSON.stringify lines
-  #   test.eq lines, [["","f = ->","\n"],["  ","for x in xs","\n"],["    ","while x > 0","\n"],["      ","x -= 1","\n"],["      ","log x","\n"],["      ","g x","\n"],["  ","log 'ok'","\n"],["  ","log 'over'",""]]
 
-  # #---------------------------------------------------------------------------------------------------------
-  # '$_as_bracketed: turns indented source into bracketed string': ( test ) ->
-  #   G       = @
-  #   $       = G[ '$' ]
-  #   source  = """
-  #   f = ->
-  #     for x in xs
-  #       while x > 0
-  #         x -= 1
-  #         log x
-  #         g x
-  #     log 'ok'
-  #     log 'over'
-  #   """
-  #   # source = """
-  #   # if x > 0
-  #   #   x += 1
-  #   #   print x
-  #   # """
-  #   bracketed = G.$_as_bracketed source
-  #   result    = "⟦f = ->⟦for x in xs⟦while x > 0⟦x -= 1∿log x∿g x⟧⟧log 'ok'∿log 'over'⟧⟧"
-  #   result    = result.replace /⟦/g, $[ 'opener' ]
-  #   result    = result.replace /⟧/g, $[ 'closer' ]
-  #   result    = result.replace /∿/g, $[ 'connector' ]
-  #   debug bracketed
-  #   test.eq bracketed, result
+  #---------------------------------------------------------------------------------------------------------
+  '$_raw_lines: turns indented source into list of triplets': ( test ) ->
+    G       = @
+    source  = """
+    f = ->
+      for x in xs
+        while x > 0
+          x -= 1
+          log x
+          g x
+      log 'ok'
+      log 'over'
+    """
+    lines = G.$_raw_lines.run source
+    # debug JSON.stringify lines
+    test.eq lines, [["","f = ->","\n"],["  ","for x in xs","\n"],["    ","while x > 0","\n"],["      ","x -= 1","\n"],["      ","log x","\n"],["      ","g x","\n"],["  ","log 'ok'","\n"],["  ","log 'over'",""]]
 
-  # #---------------------------------------------------------------------------------------------------------
-  # '$_as_bracketed (default G): disallow unconventional indentation': ( test ) ->
-  #   G       = @
-  #   source  = """
-  #   f = ->
-  #       for x in xs
-  #     while x > 0
-  #     log 'ok'
-  #     log 'over'
-  #   """
-  #   test.throws ( -> G.$_as_bracketed source ), /inconsistent indentation \(too deep\) on line/
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed: turns indented source into bracketed string': ( test ) ->
+    G       = @
+    $       = G[ '$' ]
+    source  = """
+    f = ->
+      for x in xs
+        while x > 0
+          x -= 1
+          log x
+          g x
+      log 'ok'
+      log 'over'
+    """
+    # source = """
+    # if x > 0
+    #   x += 1
+    #   print x
+    # """
+    bracketed = G.$_as_bracketed source
+    result    = "⟦f = ->⟦for x in xs⟦while x > 0⟦x -= 1∿log x∿g x⟧⟧log 'ok'∿log 'over'⟧⟧"
+    result    = result.replace /⟦/g, $[ 'opener' ]
+    result    = result.replace /⟧/g, $[ 'closer' ]
+    result    = result.replace /∿/g, $[ 'connector' ]
+    # debug bracketed
+    test.eq bracketed, result
 
-  # #---------------------------------------------------------------------------------------------------------
-  # '$_as_bracketed (custom G): allow unconventional indentation': ( test ) ->
-  #   options =
-  #     'delta':  Infinity
-  #   #.......................................................................................................
-  #   G       = @$new options
-  #   $       = G[ '$' ]
-  #   #.......................................................................................................
-  #   source  = """
-  #   f = ->
-  #       for x in xs
-  #     while x > 0
-  #       x -= 1
-  #       log x
-  #       g x
-  #     log 'ok'
-  #     log 'over'
-  #   """
-  #   #.......................................................................................................
-  #   bracketed = G.$_as_bracketed source
-  #   result    = "⟦f = ->⟦⟦for x in xs⟧while x > 0⟦x -= 1∿log x∿g x⟧log 'ok'∿log 'over'⟧⟧"
-  #   result    = result.replace /⟦/g, $[ 'opener' ]
-  #   result    = result.replace /⟧/g, $[ 'closer' ]
-  #   result    = result.replace /∿/g, $[ 'connector' ]
-  #   test.eq bracketed, result
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed (default G): disallow unconventional indentation': ( test ) ->
+    G       = @
+    source  = """
+    f = ->
+        for x in xs
+      while x > 0
+      log 'ok'
+      log 'over'
+    """
+    test.throws ( -> G.$_as_bracketed source ), /inconsistent indentation \(too deep\) on line/
 
-  # #---------------------------------------------------------------------------------------------------------
-  # '$_as_bracketed (default G): disallow forbidden indentation-like chrs': ( test ) ->
-  #   G       = @
-  #   source  = """
-  #   f = ->
-  #     for x in xs
-  #       \twhile x > 0
-  #         x -= 1
-  #         log x
-  #         g x
-  #     log 'ok'
-  #     log 'over'
-  #   """
-  #   # debug JSON.stringify bracketed
-  #   # test.throws ( -> G.$_as_bracketed source ), /Expected no-whitespace/
-  #   test.throws ( -> G.$_as_bracketed source ), /Expected end/
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed (custom G): allow unconventional indentation': ( test ) ->
+    options =
+      'delta':  Infinity
+    #.......................................................................................................
+    G       = @$new options
+    $       = G[ '$' ]
+    #.......................................................................................................
+    source  = """
+    f = ->
+        for x in xs
+      while x > 0
+        x -= 1
+        log x
+        g x
+      log 'ok'
+      log 'over'
+    """
+    #.......................................................................................................
+    bracketed = G.$_as_bracketed source
+    result    = "⟦f = ->⟦⟦for x in xs⟧while x > 0⟦x -= 1∿log x∿g x⟧log 'ok'∿log 'over'⟧⟧"
+    result    = result.replace /⟦/g, $[ 'opener' ]
+    result    = result.replace /⟧/g, $[ 'closer' ]
+    result    = result.replace /∿/g, $[ 'connector' ]
+    test.eq bracketed, result
+
+  #---------------------------------------------------------------------------------------------------------
+  '$_as_bracketed (default G): disallow forbidden indentation-like chrs': ( test ) ->
+    G       = @
+    source  = """
+    f = ->
+      for x in xs
+        \twhile x > 0
+          x -= 1
+          log x
+          g x
+      log 'ok'
+      log 'over'
+    """
+    # debug JSON.stringify bracketed
+    # test.throws ( -> G.$_as_bracketed source ), /Expected no-whitespace/
+    test.throws ( -> G.$_as_bracketed source ), /Expected end/
 
   # #---------------------------------------------------------------------------------------------------------
   # 'expression (default G): parses one-liner program': ( test ) ->

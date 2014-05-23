@@ -85,7 +85,7 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
   for route_info in route_infos
     { route, name: module_name, nr } = route_info
     unless @_matches_filter nr, module_name, matchers
-      warn "skipping #{nr}-#{module_name}"
+      whisper "skipping #{nr}-#{module_name}"
       skip_count += 1
       continue
     info ( rpr nr ) + '-' + module_name
@@ -111,12 +111,12 @@ escodegen_options         = ( require '../options' )[ 'escodegen' ]
       praise "#{locator}"
   #.........................................................................................................
   whisper '-------------------------------------------------------------'
-  info    "Out of #{route_count} modules,"
-  warn    "skipped #{skip_count} modules;"
-  urge    "of the remaining #{route_count - skip_count} modules,"
+  info    "Skipped #{skip_count} out of #{route_count} modules;"
+  info    "of the #{route_count - skip_count} modules inspected,"
   urge    "#{miss_count} modules had no test cases."
-  info    "Of #{test_count} tests in #{route_count - miss_count} modules,"
-  praise  "#{pass_count} tests passed,"
+  info    "In the remaining #{route_count - miss_count - skip_count} modules,"
+  info    "#{test_count} tests were performed,"
+  praise  "of which #{pass_count} tests passed,"
   warn    "and #{fail_count} tests failed."
   whisper '-------------------------------------------------------------'
   #.........................................................................................................
