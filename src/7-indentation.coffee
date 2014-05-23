@@ -1,6 +1,16 @@
 
 ###
 
+Parses nested structures.
+* **meta-characters** (opener, connector, closer);
+* **material characters** are code points that are not meta-characters;
+* **phrase**: a contiguous sequence of material characters;
+* **suite**: a contiguous sequence of phrases;
+* **stage**: suites with a common parent; may include nested stages
+* **module**: the outermost stage of a given source.
+
+# * **chunk**
+# * **block**
 
 
 
@@ -233,22 +243,16 @@ XRE                       = require './9-xre'
   #.........................................................................................................
   return R
 
+
+#===========================================================================================================
+# PARSING INDENTED SOURCE
 #-----------------------------------------------------------------------------------------------------------
 @$new.$module = ( G, $ ) ->
+  ### Same as `$chunk`, but accepts indented source. ###
   R = π.seq ( -> G.$chunk ), π.end
   R = R.transform ( text ) -> G.$_as_bracketed text
   R = R.onMatch ( match ) -> match[ 0 ]
   return R
-
-# #-----------------------------------------------------------------------------------------------------------
-# @$new.expression = ( G, $ ) ->
-#   R = π.alt -> G.$chunk
-#   R = R.transform ( text ) -> G.$_as_bracketed text
-#   # R = R.transform ( text ) -> text
-#   R = R.onMatch ( match, state ) ->
-#     debug match
-#     return match
-#   return R
 
 
 #===========================================================================================================

@@ -1,7 +1,10 @@
+![](https://github.com/loveencounterflow/FLOWMATIC/raw/master/artwork/flowmatic-logo-4a.png)
 
 
+- [Arabika](#arabika)
+	- [7: Pagoda (Indentation-Parsing)](#7-pagoda-indentation-parsing)
 
-![](https://github.com/loveencounterflow/arabika/raw/master/art/arabika-logo-3.png)
+> **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
 
 # Arabika

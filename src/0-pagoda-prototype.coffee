@@ -2,7 +2,7 @@
 
 
 ### Parses nested structures.
-* **meta-characters** are `<`, `=`, `>` (easy to type, not special in RegExes);
+* **meta-characters** (opener, connector, closer);
 * **material characters** are code points that are not meta-characters;
 * **phrase**: a contiguous sequence of material characters;
 * **suite**: a contiguous sequence of phrases;
@@ -12,18 +12,6 @@
 # * **chunk**
 # * **block**
 
-Valid inputs include:
-
-````
-<>
-<1>
-<1 = 2>
-<1 = 2 <3>>
-<1 = 2 <3 <4>>
-<1 = 2 <3 <4 = 5>>
-<1 = 2 <3 <4 = 5> 6>
-<1 = 2 <3 <4 = 5> 6 = 7>
-````
 
 ###
 
