@@ -21,12 +21,12 @@ Grammars and Symbiotic Programming Languages (that compile to JavaScript). Writt
 Symbolic crumbs:
 
 Address variable `x` in...
-* **`x`** — any provided implicit scope
-* **`./x`** — this scope
-* **`../x`** — the directly enclosing scope
-* **`*/x`** — this or any enclosing scope
-* **`~/x`** — module scope (?)
-* **`/x`** — global scope (?)
+* `   x` — any provided implicit scope
+* ` ./x` — this scope
+* `../x` — the directly enclosing scope
+* ` */x` — this or any enclosing scope
+* ` ~/x` — the current module scope (?)
+* `  /x` — the global scope (?)
 
 * allowed:
   * `foo/bar`
