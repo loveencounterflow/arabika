@@ -27,6 +27,7 @@ Address variable `x` in...
 * ` */x` (or `.*/x`??) — this or any enclosing scope
 * ` ~/x` — the current module scope (?)
 * `  /x` — the global scope (?)
+* ` y/x` – the scope named `y` (which may itself be written `./y`, `/y`, ...)
 
 * allowed:
   * `foo/bar`
