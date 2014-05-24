@@ -7,6 +7,8 @@
 		- [Indirect Crumbs](#indirect-crumbs)
 	- [7: Pagoda (Indentation-Parsing)](#7-pagoda-indentation-parsing)
 	- [Languages, Dialects, Versions, and Packages](#languages-dialects-versions-and-packages)
+		- [The SemVer Scheme and the `use` Statement](#the-semver-scheme-and-the-use-statement)
+		- [Packaging](#packaging)
 
 > **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
@@ -166,6 +168,8 @@ like `if x > 0【x += 1〓print x】` was bracketed by the parser or by the prog
 
 ## Languages, Dialects, Versions, and Packages
 
+### The SemVer Scheme and the `use` Statement
+
 Idea: Repurpose Semantic Versioning to indicate Language number, Dialect number, and Dialect Version number.
 For example, Arabica gets designated language #1 (zero reserved for special purposes), and, say, FlowMatic
 Forth as language #42.
@@ -177,11 +181,30 @@ SemVer `1.4.x`, and FlowMatic Forth number literals as `42.4.x`.
 SemVer literals with no or one dot *always* refer to the current language; in order to `use` dialects from
 another language, you *must* provide a tripartite expression with two dots:
 
+````coffeescript
 use 4           # use dialect #4 of the current language
 use 4.*         # same as `4`, `@.4`, and `@.4.*`
 use @.4         # see above
 use ^4.3        # short for `^@.4.3`
 use ^@.4.3      # use a version compatible with this language, dialect 4, release 3
 use 42.4.*      # use latest or available version of language 42, dialect 4
+use 42.*.*      # use latest or available version of language 42, complete official edition
+````
+
+### Packaging
+
+Minimal npm module:
+
+````
+1234-mydialect
+  package.json
+  main.js       # or other supported language
+````
+
+Dependencies regarding dialects *not* listed under `package.json/dependencies`, but under
+`package.json/flowmatic/needs` (or similar; TBD).
+
+
+
 
 
