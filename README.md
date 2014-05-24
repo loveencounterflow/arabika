@@ -4,6 +4,7 @@
 - [Arabika](#arabika)
 	- [6: Names and Routes](#6-names-and-routes)
 		- [Symbolic Crumbs](#symbolic-crumbs)
+		- [Indirect Crumbs](#indirect-crumbs)
 	- [7: Pagoda (Indentation-Parsing)](#7-pagoda-indentation-parsing)
 
 > **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
@@ -25,9 +26,27 @@ Address variable `x` in...
 * ` ./x` — this scope
 * `../x` — the directly enclosing scope
 * ` */x` (or `.*/x`??) — this or any enclosing scope
+* ` y/x` – the scope named `y` (which may itself be written `./y`, `/y`, ...)
+
+Not yet sure about these:
+
 * ` ~/x` — the current module scope (?)
 * `  /x` — the global scope (?)
-* ` y/x` – the scope named `y` (which may itself be written `./y`, `/y`, ...)
+
+Doing it this way seems logical, but has the disadvantage that referring to the global scope is made easier
+than referring to the module scope.
+
+We also have to keep in mind that requiring users to write `/x` to refer to a global *variable* will break
+the analogy between global variables and global keywords—unless we want people to use, say, `/parse-integer`
+instead of `parse-integer` (if that should become part of the standard vocabulary).
+
+
+Symbolic crumbs are (for now) **only allowed in leading position**—unlike file system routes and URLs, you
+may not write things like `/foo/bar/../baz`.
+
+### Indirect Crumbs
+
+Marked with a `$` (Dollar sign; interpolation marker).
 
 * allowed:
   * `foo/bar`
