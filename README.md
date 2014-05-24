@@ -20,22 +20,23 @@ Grammars and Symbiotic Programming Languages (that compile to JavaScript). Writt
 
 Symbolic crumbs:
 
-* **`x`**: `x` in any provided implicit scope
-* **`./x`**: `x` in this scope
-* **`../x`**: `x` in the directly enclosing scope
-* **`*/x`**: `x` in this or any enclosing scope
-* **`~/x`**: `x` in module scope (?)
-* **`/x`**: `x` in global scope (?)
+Address variable `x` in...
+* **`x`** — any provided implicit scope
+* **`./x`** — this scope
+* **`../x`** — the directly enclosing scope
+* **`*/x`** — this or any enclosing scope
+* **`~/x`** — module scope (?)
+* **`/x`** — global scope (?)
 
 * allowed:
-  * foo/bar
-  * foo/$bar
-  * /foo
-  * ./foo
-  * ../foo
+  * `foo/bar`
+  * `foo/$bar`
+  * `/foo`
+  * `./foo`
+  * `../foo`
 
 * forbidden:
-  * foo/bar/
+  * `foo/bar/`
 
 
 ## 7: Pagoda (Indentation-Parsing)
