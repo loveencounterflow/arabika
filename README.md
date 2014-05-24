@@ -2,6 +2,7 @@
 
 
 - [Arabika](#arabika)
+	- [6: Names and Routes](#6-names-and-routes)
 	- [7: Pagoda (Indentation-Parsing)](#7-pagoda-indentation-parsing)
 
 > **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
@@ -13,6 +14,34 @@ Experiments in Parser Combinators, Modular Grammars, Domain-Specific Languages (
 Grammars and Symbiotic Programming Languages (that compile to JavaScript). Written in tasty CoffeeScript.
 
 <!-- Tower of Babel -->
+
+## 6: Names and Routes
+
+
+Symbolic crumbs:
+
+* **`x`**: `x` in any provided implicit scope
+* **`./x`**: `x` in this scope
+* **`../x`**: `x` in the directly enclosing scope
+* **`*/x`**: `x` in this or any enclosing scope
+* **`~/x`**: `x` in module scope (?)
+* **`/x`**: `x` in global scope (?)
+
+* allowed:
+
+  * foo/bar
+
+
+  * foo/$bar
+
+  * /foo
+  * ./foo
+  * ../foo
+
+* forbidden:
+
+  * foo/bar/
+
 
 ## 7: Pagoda (Indentation-Parsing)
 
