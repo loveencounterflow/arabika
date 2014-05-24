@@ -28,18 +28,13 @@ Symbolic crumbs:
 * **`/x`**: `x` in global scope (?)
 
 * allowed:
-
   * foo/bar
-
-
   * foo/$bar
-
   * /foo
   * ./foo
   * ../foo
 
 * forbidden:
-
   * foo/bar/
 
 
