@@ -12,19 +12,36 @@ warn                      = TRM.get_logger 'warn',      badge
 help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
-BNP                       = require 'coffeenode-bitsnpieces'
 ƒ                         = require 'flowmatic'
-$new                      = ƒ.new
+@$new                     = ƒ.new.new @
+BNP                       = require 'coffeenode-bitsnpieces'
 XRE                       = require './9-xre'
-# debug (require 'coffeenode-types').type_of XRE
-# process.exit()
 
 #-----------------------------------------------------------------------------------------------------------
-@$_constants =
-  'ascii-punctuation':  """-!"#%&'()*,./:;?@[\\]_{}"""
+@$ =
+  ### ASCII Punctuation: ###
+  'ascii-punctuation':  /// [ - _ ! " \# % & ' ( \[ { \\ } \] ) * , . / : ; ? @ ] ///
+  #.........................................................................................................
+  ### Whitespace: ###
+  ### Unicode line endings (RegEx should have the global flag set): ###
+  'newlines':           /// \r\n | [\n\v\f\r\x85\u2028\u2029] ///g
+  ### Unicode linear whitespace: ###
+  'linear-whitespace':  XRE '\\L+'
+  ### Anything but whitespace: ###
+  'no-whitespace':      /// [^ \s \x85 ]+ ///
+
+  #.........................................................................................................
+  ### Names: ###
+  ### Leading character in names (excluding sigils): ###
+  'name-first-chr':     XRE '\\p{L}'
+  ### Trailing characters in names: ###
+  'name-trailing-chrs': XRE '(?:-|\\p{L}|\\d)*'
+  ### Character used to form URL-like routes out of crumbs: ###
+  'crumbs-joiner':       '/'
   ### Sigils may start and classify simple names: ###
   'sigils':
-    # '@':        'attribute' # ??? used for `this`
+    '@':        'attribute' # ??? used for `this`
+    '~':        'system'
     '.':        'hidden'
     '_':        'private'
     # '$':        'special' # used for interpolation!
@@ -33,65 +50,138 @@ XRE                       = require './9-xre'
     # '°':        ''
     # '^':        ''
 
+#-----------------------------------------------------------------------------------------------------------
+@$new.$ascii_punctuation = ( G, $ ) ->
+  R = ƒ.regex $[ 'ascii-punctuation' ]
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$chr = ( G, $ ) ->
+  R = ƒ.regex XRE '.', 'Qs'
+  R = R.onMatch ( match ) -> match[ 0 ]
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `ƒ.or` is an expedient here ###
-### TAINT no memoizing ###
-@$_ascii_punctuation = ƒ.or =>
-  ƒ.regex XRE '[' + ( XRE.$esc @$_constants[ 'ascii-punctuation' ] ) + ']'
-
-#-----------------------------------------------------------------------------------------------------------
-@$_chr = ( ƒ.regex XRE '.', 'Qs' )
-  .onMatch ( match ) -> match[ 0 ]
+@$new.chr = ( G, $ ) ->
+  R = ƒ.or -> G.$chr
+  R = R.onMatch ( match ) -> ƒ.new.literal 'chr', match, match
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `ƒ.or` is an expedient here ###
-@chr =  ( ƒ.or @$_chr )
-  .onMatch ( match ) -> $new.literal 'chr', match, match
+@$new.$letter = ( G, $ ) ->
+  R = ƒ.regex XRE '\\p{L}'
+  R = R.onMatch ( match ) -> match[ 0 ]
+  return R
 
 
 #===========================================================================================================
 # WHITESPACE
 #-----------------------------------------------------------------------------------------------------------
-### Linear WhiteSpace ###
-@lws = ( ƒ.regex /\x20+/ )
-  .onMatch ( match ) -> return $new.literal 'lws', match[ 0 ], match[ 0 ]
+@$new.$lws = ( G, $ ) ->
+  ### Linear WhiteSpace ###
+  R = ƒ.regex $[ 'linear-whitespace' ]
+  R = R.onMatch ( match ) -> match[ 0 ]
+  R = R.describe 'linear whitespace'
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
-### invisible LWS ###
-@ilws = ƒ.drop ƒ.regex /\x20+/
+@$new.lws = ( G, $ ) ->
+  ### Linear WhiteSpace ###
+  R = G.$lws.onMatch ( match ) -> ƒ.new.literal 'lws', match, match
+  R = R.describe 'linear whitespace'
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
-### no WhiteSpace ###
-@$nws = ( ƒ.regex /[^\s\x85]+/ )
-### TAINT better way to chain methods? ###
-@nws = @$nws.onMatch ( match ) => $new.literal 'nws', match[ 0 ], match[ 0 ]
-@nws = @nws.describe "no-whitespace"
+@$new.ilws = ( G, $ ) ->
+  ### invisible LWS ###
+  R = ƒ.drop ƒ.regex $[ 'linear-whitespace' ]
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
-### Unicode line endings: ###
-@$nl_re = /// \r\n | [\n\v\f\r\x85\u2028\u2029] ///g
-@$nl    = ƒ.regex @$nl_re
+@$new.$nws = ( G, $ ) ->
+  ### no WhiteSpace ###
+  R = ƒ.regex $[ 'no-whitespace' ]
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.nws = ( G, $ ) ->
+  R = ƒ.or -> G.$nws.onMatch ( match ) -> ƒ.new.literal 'nws', match[ 0 ], match[ 0 ]
+  R = R.describe "no-whitespace"
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+# ### TAINT `ƒ.or` is an expedient here ###
+@$new.$nl = ( G, $ ) ->
+  R = ƒ.regex $[ 'newlines' ]
+  return R
 
 
 #===========================================================================================================
-# TESTS
+# NAMES
 #-----------------------------------------------------------------------------------------------------------
+@$new.$name_first_chr = ( G, $ ) ->
+  R = ƒ.regex $[ 'name-first-chr' ]
+  R = R.onMatch ( match ) -> match[ 0 ]
+  R = R.describe 'first character of name'
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$name_trailing_chrs = ( G, $ ) ->
+  R = ƒ.regex $[ 'name-trailing-chrs' ]
+  R = R.onMatch ( match ) -> match[ 0 ]
+  R = R.describe 'trailing characters of name'
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$name_sigil = ( G, $ ) ->
+  sigils = ( XRE.$esc key for key of $[ 'sigils'] ).join ''
+  R = ƒ.regex XRE "[#{sigils}]"
+  R = R.onMatch ( match ) -> match[ 0 ]
+  R = R.describe 'name'
+  return R
+
+# #-----------------------------------------------------------------------------------------------------------
+# @$new.$name = ( G, $ ) ->
+#   sigils = ( XRE.$esc key for key of $[ 'sigils'] ).join ''
+#   R = ƒ.seq ( XRE "[#{sigils}]?" ), ( -> G.$name_first_chr ), ( -> G.$name_trailing_chrs )
+#   R = R.onMatch ( match ) -> match.join ''
+#   R = R.describe 'name'
+#   return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$name = ( G, $ ) ->
+  R = ƒ.seq ( ƒ.optional -> G.$name_sigil ), ( -> G.$name_first_chr ), ( -> G.$name_trailing_chrs )
+  R = R.onMatch ( match ) -> match.join ''
+  R = R.describe 'name'
+  return R
+
+
+#===========================================================================================================
+# APPLY NEW TO MODULE
+#-----------------------------------------------------------------------------------------------------------
+### Run `@$new` to make `@` (`this`) an instance of this grammar with default options: ###
+@$new @, null
+
+
+#===========================================================================================================
 @$TESTS =
+#-----------------------------------------------------------------------------------------------------------
 
   #---------------------------------------------------------------------------------------------------------
   '$chr: matches code points (instead of code units) and newlines': ( test ) ->
-    test.eq ( @$_chr.run 'x' ), 'x'
-    test.eq ( @$_chr.run '\r' ), '\r'
-    test.eq ( @$_chr.run '\n' ), '\n'
-    test.eq ( @$_chr.run '𠀝' ), '𠀝'
+    test.eq ( @$chr.run 'x' ), 'x'
+    test.eq ( @$chr.run '\r' ), '\r'
+    test.eq ( @$chr.run '\n' ), '\n'
+    test.eq ( @$chr.run '𠀝' ), '𠀝'
 
   #---------------------------------------------------------------------------------------------------------
   'chr: matches code points (instead of code units) and newlines': ( test ) ->
-    test.eq ( @chr.run 'x'  ), $new.literal 'chr', 'x', 'x'
-    test.eq ( @chr.run '\r' ), $new.literal 'chr', '\r', '\r'
-    test.eq ( @chr.run '\n' ), $new.literal 'chr', '\n', '\n'
-    test.eq ( @chr.run '𠀝'  ), $new.literal 'chr', '𠀝', '𠀝'
+    test.eq ( @chr.run 'x'  ), ƒ.new.literal 'chr', 'x', 'x'
+    test.eq ( @chr.run '\r' ), ƒ.new.literal 'chr', '\r', '\r'
+    test.eq ( @chr.run '\n' ), ƒ.new.literal 'chr', '\n', '\n'
+    test.eq ( @chr.run '𠀝'  ), ƒ.new.literal 'chr', '𠀝', '𠀝'
 
   #---------------------------------------------------------------------------------------------------------
   '$chr: accepts single character, be it one or two code units': ( test ) ->
@@ -102,13 +192,13 @@ XRE                       = require './9-xre'
       [ '𠀝',     　           '𠀝' ]
       ]
     for [ probe, result, ] in probes_and_results
-      test.eq ( @$_chr.run probe ), result
+      test.eq ( @$chr.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
   '$chr: rejects more than a single character': ( test ) ->
     probes = [ '01', 'qwertz', '中中', '𠀝x', ]
     for probe in probes
-      test.throws ( => @$_chr.run probe ), /Expected end/
+      test.throws ( => @$chr.run probe ), /Expected end/
 
   #---------------------------------------------------------------------------------------------------------
   '$ascii_punctuation: rejects anything but ASCII punctuation': ( test ) ->
@@ -116,10 +206,10 @@ XRE                       = require './9-xre'
     for probe in probes
       # try
       #   debug rpr probe
-      #   @$_ascii_punctuation.run probe
+      #   @$ascii_punctuation.run probe
       # catch error
       #   debug error[ 'message' ]
-      test.throws ( => @$_ascii_punctuation.run probe ), /Expected /
+      test.throws ( => @$ascii_punctuation.run probe ), /Expected /
 
 
   #=========================================================================================================
@@ -152,13 +242,13 @@ XRE                       = require './9-xre'
       "中國皇帝🚂" ]
     #.......................................................................................................
     for probe in probes
-      test.eq ( @nws.run probe ), ( $new.literal 'nws', probe, probe )
+      test.eq ( @nws.run probe ), ( ƒ.new.literal 'nws', probe, probe )
 
   #---------------------------------------------------------------------------------------------------------
   'lws: accepts sequences of U+0020': ( test ) ->
     probes = [ ' ', '        ', ]
     for probe in probes
-      test.eq ( @lws.run probe ), ( $new.literal 'lws', probe, probe )
+      test.eq ( @lws.run probe ), ( ƒ.new.literal 'lws', probe, probe )
 
   #---------------------------------------------------------------------------------------------------------
   'ilws: accepts and drops sequences of U+0020': ( test ) ->
@@ -167,10 +257,65 @@ XRE                       = require './9-xre'
       test.eq ( @ilws.run probe ), null
 
   #---------------------------------------------------------------------------------------------------------
-  '$nl_re: splits string with Unicode line endings correctly': ( test ) ->
-    test.eq ( '1\r\n2\n3\v4\f5\r6\x857\u20288\u20299'.split @$nl_re ), [ '1', '2', '3', '4', '5', '6', '7', '8', '9' ]
+  "G$[ 'newlines' ]: splits string with Unicode line endings correctly": ( test ) ->
+    G = @
+    test.eq ( '1\r\n2\n3\v4\f5\r6\x857\u20288\u20299'.split @$[ 'newlines' ] ), \
+      [ '1', '2', '3', '4', '5', '6', '7', '8', '9' ]
 
   #---------------------------------------------------------------------------------------------------------
-  '$nl_re: allows global replace': ( test ) ->
-    test.eq ( '1\r\n2\n3\v4\f5\r6\x857\u20288\u20299'.replace @$nl_re, '#' ), '1#2#3#4#5#6#7#8#9'
+  "G$[ 'newlines' ]: allows global replace": ( test ) ->
+    test.eq ( '1\r\n2\n3\v4\f5\r6\x857\u20288\u20299'.replace @$[ 'newlines' ], '#' ), '1#2#3#4#5#6#7#8#9'
+
+  #---------------------------------------------------------------------------------------------------------
+  '$letter: matches single letters, including 32bit code points': ( test ) ->
+    probes_and_results = [
+      [ 'q',                  'q' ]
+      [ '中',     　           '中' ]
+      [ '𠀝',     　           '𠀝' ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      # whisper probe
+      test.eq ( @$letter.run probe ), result
+
+  #---------------------------------------------------------------------------------------------------------
+  '$letter: rejects anything but single letters': ( test ) ->
+    probes = [ '0', '-', '(', '؟', 'xx' ]
+    for probe in probes
+      # whisper probe
+      test.throws ( => @$letter.run probe ), /Expected/
+
+  #---------------------------------------------------------------------------------------------------------
+  '$name_first_chr: matches first character of names': ( test ) ->
+    probes = [ 'a', 'A', '𠀁',  ]
+    for probe in probes
+      test.eq ( @$name_first_chr.run probe ), probe
+
+  #---------------------------------------------------------------------------------------------------------
+  '$name_trailing_chrs: matches trailing characters of names': ( test ) ->
+    probes = [ 'abc', 'abc-def', 'abc-def-45',  ]
+    for probe in probes
+      # whisper probe
+      test.eq ( @$name_trailing_chrs.run probe ), probe
+
+  #---------------------------------------------------------------------------------------------------------
+  '$name: matches names': ( test ) ->
+    probes = [ 'n', 'n0', 'readable-names', 'foo-32', ]
+    for probe in probes
+      # whisper probe
+      test.eq ( @$name.run probe ), probe
+
+  #---------------------------------------------------------------------------------------------------------
+  '$name: matches names with sigils': ( test ) ->
+    probes = [ '@n', '%n0', '_readable-names', '.foo-32', '~isa', ]
+    for probe in probes
+      whisper probe
+      test.eq ( @$name.run probe ), probe
+
+  #---------------------------------------------------------------------------------------------------------
+  '$name: rejects non-names': ( test ) ->
+    probes = [ '034', '-/-', '()', '؟?', ]
+    for probe in probes
+      # whisper probe
+      test.throws ( => @$name.run probe ), /Expected/
+
 
