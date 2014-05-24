@@ -24,7 +24,7 @@ Address variable `x` in...
 * `   x` — any provided implicit scope
 * ` ./x` — this scope
 * `../x` — the directly enclosing scope
-* ` */x` — this or any enclosing scope
+* ` */x` (or `.*/x`??) — this or any enclosing scope
 * ` ~/x` — the current module scope (?)
 * `  /x` — the global scope (?)
 
