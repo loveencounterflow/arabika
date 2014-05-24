@@ -6,6 +6,7 @@
 		- [Symbolic Crumbs](#symbolic-crumbs)
 		- [Indirect Crumbs](#indirect-crumbs)
 	- [7: Pagoda (Indentation-Parsing)](#7-pagoda-indentation-parsing)
+	- [Languages, Dialects, Versions, and Packages](#languages-dialects-versions-and-packages)
 
 > **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
@@ -20,6 +21,9 @@ Grammars and Symbiotic Programming Languages (that compile to JavaScript). Writt
 ## 6: Names and Routes
 
 ### Symbolic Crumbs
+
+Symbolic crumbs are (for now) **only allowed in leading position**—unlike file system routes and URLs, you
+may not write things like `/foo/bar/../baz`.
 
 Address variable `x` in...
 * `   x` — any provided implicit scope
@@ -37,16 +41,16 @@ Doing it this way seems logical, but has the disadvantage that referring to the 
 than referring to the module scope.
 
 We also have to keep in mind that requiring users to write `/x` to refer to a global *variable* will break
-the analogy between global variables and global keywords—unless we want people to use, say, `/parse-integer`
-instead of `parse-integer` (if that should become part of the standard vocabulary).
-
-
-Symbolic crumbs are (for now) **only allowed in leading position**—unlike file system routes and URLs, you
-may not write things like `/foo/bar/../baz`.
+the analogy between global variables and global *keywords*—unless we want people to use, say, `/parse-integer`
+instead of `parse-integer`. Maybe there should be some kind of 'standard vocabulary' namespace, i.e. all
+names that can be referred to without any kind of licensing qualification.
 
 ### Indirect Crumbs
 
-Marked with a `$` (Dollar sign; interpolation marker).
+Marked with a `$` (Dollar sign; interpolation mark).
+
+Indirect crumbs take the (serialized) value of the referred variable instead of the name itself; therefore,
+`bar: 42; x: foo/$bar` will set `x` to the value of `foo/42`.
 
 * allowed:
   * `foo/bar`
@@ -159,4 +163,25 @@ like `if x > 0【x += 1〓print x】` was bracketed by the parser or by the prog
 
 
 [Indentation-sensitive syntax for Scheme](http://srfi.schemers.org/srfi-49/srfi-49.html)
+
+## Languages, Dialects, Versions, and Packages
+
+Idea: Repurpose Semantic Versioning to indicate Language number, Dialect number, and Dialect Version number.
+For example, Arabica gets designated language #1 (zero reserved for special purposes), and, say, FlowMatic
+Forth as language #42.
+
+Each language numbers its own dialects, but there may be some conventions—say, to put all the basic
+numerical literals into a module called `4-number`. That is, Arabika number literals are dealt with as
+SemVer `1.4.x`, and FlowMatic Forth number literals as `42.4.x`.
+
+SemVer literals with no or one dot *always* refer to the current language; in order to `use` dialects from
+another language, you *must* provide a tripartite expression with two dots:
+
+use 4           # use dialect #4 of the current language
+use 4.*         # same as `4`, `@.4`, and `@.4.*`
+use @.4         # see above
+use ^4.3        # short for `^@.4.3`
+use ^@.4.3      # use a version compatible with this language, dialect 4, release 3
+use 42.4.*      # use latest or available version of language 42, dialect 4
+
 
