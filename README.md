@@ -3,6 +3,7 @@
 
 - [Arabika](#arabika)
 	- [6: Names and Routes](#6-names-and-routes)
+		- [Symbolic Crumbs](#symbolic-crumbs)
 	- [7: Pagoda (Indentation-Parsing)](#7-pagoda-indentation-parsing)
 
 > **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
@@ -17,8 +18,7 @@ Grammars and Symbiotic Programming Languages (that compile to JavaScript). Writt
 
 ## 6: Names and Routes
 
-
-Symbolic crumbs:
+### Symbolic Crumbs
 
 Address variable `x` in...
 * `   x` — any provided implicit scope
