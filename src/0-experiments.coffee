@@ -182,6 +182,12 @@ try_splice = ->
   log d
 
 #-----------------------------------------------------------------------------------------------------------
+try_esprima = ->
+  ESCODEGEN                 = require 'escodegen'
+  ESPRIMA                   = require 'esprima'
+  debug ESPRIMA.parse 'x = null'
+
+#-----------------------------------------------------------------------------------------------------------
 try_escodegen = ->
   ESCODEGEN                 = require 'escodegen'
   ESPRIMA                   = require 'esprima'
@@ -265,120 +271,16 @@ try_escodegen = ->
 
 
 
-# { type: 'BlockStatement',
-#   'x-subtype': 'suite',
-#   body:
-#    [ { type: 'Literal',
-#        'x-subtype': 'phrase',
-#        'x-verbatim': 'f = ->',
-#        raw: 'f = ->',
-#        value: 'f = ->' },
-#      ,
-#      { type: 'BlockStatement',
-#        'x-subtype': 'suite',
-#        body:
-#         [ { type: 'Literal',
-#             'x-subtype': 'phrase',
-#             'x-verbatim': 'for x in xs',
-#             raw: 'for x in xs',
-#             value: 'for x in xs' },
-#           ,
-#           { type: 'BlockStatement',
-#             'x-subtype': 'suite',
-#             body:
-#              [ { type: 'Literal',
-#                  'x-subtype': 'phrase',
-#                  'x-verbatim': 'while x > 0',
-#                  raw: 'while x > 0',
-#                  value: 'while x > 0' },
-#                ,
-#                { type: 'BlockStatement',
-#                  'x-subtype': 'suite',
-#                  body:
-#                   [ { type: 'Literal',
-#                       'x-subtype': 'phrase',
-#                       'x-verbatim': 'x -= 1',
-#                       raw: 'x -= 1',
-#                       value: 'x -= 1' },
-#                     { type: 'Literal',
-#                       'x-subtype': 'phrase',
-#                       'x-verbatim': 'log x',
-#                       raw: 'log x',
-#                       value: 'log x' },
-#                     { type: 'Literal',
-#                       'x-subtype': 'phrase',
-#                       'x-verbatim': 'g x',
-#                       raw: 'g x',
-#                       value: 'g x' },
-#                      ] } ] },
-#           { type: 'Literal',
-#             'x-subtype': 'phrase',
-#             'x-verbatim': 'log \'ok\'',
-#             raw: 'log \'ok\'',
-#             value: 'log \'ok\'' },
-#           { type: 'Literal',
-#             'x-subtype': 'phrase',
-#             'x-verbatim': 'log \'over\'',
-#             raw: 'log \'over\'',
-#             value: 'log \'over\'' },
-#            ] } ] }
-
-#-----------------------------------------------------------------------------------------------------------
-try_reduce = ->
-  # ### Parses nested structures.
-  # * **meta-characters** are `<`, `=`, `>` (easy to type, not special in RegExes);
-  # * **material characters** are code points that are not meta-characters;
-  # * **phrase**: a contiguous sequence of material characters;
-  # * **suite**: a contiguous sequence of phrases;
-  # * **stage**: suites with a common parent; may include nested stages
-  # * **module**: the outermost stage of a given source.
-
-  # # * **chunk**
-  # # * **block**
-
-  # Valid inputs include:
-
-  # ````
-  # <>
-  # <1>
-  # <1 = 2>
-  # <1 = 2 <3>>
-  # <1 = 2 <3 <4>>
-  # <1 = 2 <3 <4 = 5>>
-  # <1 = 2 <3 <4 = 5> 6>
-  # <1 = 2 <3 <4 = 5> 6 = 7>
-  # ````
-
-  # ###
-  # accumulator = null
-  # reducer     = null
-
-  # #---------------------------------------------------------------------------------------------------------
-  # phrase      = π.alt /[^<=>]+/
-  # phrase      = phrase.onMatch ( match ) -> match[ 0 ]
-
-  # #---------------------------------------------------------------------------------------------------------
-  # suite       = π.repeatSeparated phrase, /=/
-  # suite       = suite.onMatch ( match ) -> [ 'suite', match... ]
-
-  # #---------------------------------------------------------------------------------------------------------
-  # chunk       = π.alt ( -> suite ), ( -> stage )
-  # chunk       = chunk.onMatch ( match ) -> [ 'chunk', match... ]
-
-  # #---------------------------------------------------------------------------------------------------------
-  # stage       = π.seq /</, ( ), />/
-  # #---------------------------------------------------------------------------------------------------------
-  # debug suite.run "7,5,3"
 
 
 
 ############################################################################################################
 unless module.parent?
   # check_nws()
-  try_reduce()
+  # try_reduce()
   # try_splice()
   # try_escodegen()
-
+  try_esprima()
 
 
 

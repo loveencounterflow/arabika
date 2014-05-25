@@ -26,6 +26,14 @@ BNP                       = require 'coffeenode-bitsnpieces'
 CHR                       = require './3-chr'
 XRE                       = require './9-xre'
 
+show_matches = no
+#-----------------------------------------------------------------------------------------------------------
+### TAINT this or similar helper to be part of FlowMatic ###
+show = ( name, state ) ->
+  if show_matches
+    whisper "matching: #{name}", rpr state[ 'internal' ][ 'text' ][ state.pos() ... state.endpos() ]
+  return null
+
 #-----------------------------------------------------------------------------------------------------------
 @$ =
 
@@ -83,11 +91,11 @@ XRE                       = require './9-xre'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.$name_sigil = ( G, $ ) ->
+@$new.$sigil = ( G, $ ) ->
   sigils = ( XRE.$esc key for key of $[ 'sigils'] ).join ''
   R = ƒ.regex XRE "[#{sigils}]"
-  R = R.onMatch ( match ) -> match[ 0 ]
-  R = R.describe 'name'
+  R = R.onMatch ( match, state ) -> show '$sigil', state; match[ 0 ]
+  R = R.describe 'sigil'
   return R
 
 # #-----------------------------------------------------------------------------------------------------------
@@ -100,14 +108,16 @@ XRE                       = require './9-xre'
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$name = ( G, $ ) ->
-  R = ƒ.seq ( ƒ.optional -> G.$name_sigil ), ( -> G.$name_first_chr ), ( -> G.$name_trailing_chrs )
-  R = R.onMatch ( match ) -> match.join ''
+  R = ƒ.seq ( ƒ.optional -> G.$sigil ), ( -> G.$name_first_chr ), ( -> G.$name_trailing_chrs )
+  R = R.onMatch ( match, state ) ->
+    show '$name', state
+    ƒ.new.x_identifier match[ 0 ], match[ 1 ]
   R = R.describe 'name'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$crumb = ( G, $ ) ->
-  # R = ƒ.seq ( ƒ.optional -> G.$name_sigil ), ( -> G.$name_first_chr ), ( -> G.$name_trailing_chrs )
+  # R = ƒ.seq ( ƒ.optional -> G.$sigil ), ( -> G.$name_first_chr ), ( -> G.$name_trailing_chrs )
   # R = R.onMatch ( match ) -> match.join ''
   # R = R.describe 'name'
   # return R
@@ -118,7 +128,9 @@ XRE                       = require './9-xre'
 #-----------------------------------------------------------------------------------------------------------
 @$new.$route = ( G, $ ) ->
   R = ƒ.repeatSeparated ( -> G.$name ), $[ 'crumbs-joiner' ]
-  # R = R.onMatch ( match ) -> match.join ''
+  R = R.onMatch ( match ) ->
+    whisper match
+    ƒ.new.x_route ( match.join $[ 'crumbs-joiner' ] ), match
   R = R.describe 'route'
   return R
 
@@ -131,7 +143,7 @@ XRE                       = require './9-xre'
 #-----------------------------------------------------------------------------------------------------------
 @$new.$symbol = ( G, $ ) ->
   R = ƒ.seq $[ 'symbols-mark' ], ( -> G.$name )
-  R = R.onMatch ( match ) -> match.join ''
+  R = R.onMatch ( match ) -> ƒ.new.x_symbol ( match.join '' ), match[ 1 ]
   return R
 
 
@@ -209,13 +221,15 @@ XRE                       = require './9-xre'
     G       = @
     $       = G.$
     mark    = @$[ 'symbols-mark' ]
-    probes  = [
-      "#{mark}x"
-      "#{mark}foo"
-      "#{mark}Supercalifragilisticexpialidocious" ]
+    probes_and_results = [
+      [ "#{mark}x", {"type":"Literal","x-subtype":"symbol","raw":":x","value":"x"}]
+      [ "#{mark}foo", {"type":"Literal","x-subtype":"symbol","raw":":foo","value":"foo"}]
+      [ "#{mark}Supercalifragilisticexpialidocious", {"type":"Literal","x-subtype":"symbol","raw":":Supercalifragilisticexpialidocious","value":"Supercalifragilisticexpialidocious"}]
+    ]
     #.......................................................................................................
-    for probe in probes
-      test.eq ( G.$symbol.run probe ), probe
+    for [ probe, result, ] in probes_and_results
+      # debug JSON.stringify G.$symbol.run probe
+      test.eq ( G.$symbol.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
   '$symbol: rejects names with whitespace': ( test ) ->
