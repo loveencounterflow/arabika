@@ -188,6 +188,37 @@ try_esprima = ->
   debug ESPRIMA.parse 'x = null'
 
 #-----------------------------------------------------------------------------------------------------------
+try_esquery = ->
+  ESCODEGEN                 = require 'escodegen'
+  ESPRIMA                   = require 'esprima'
+  ESQUERY                   = require 'esquery'
+  ESTRAVERSE                = require 'estraverse'
+  JSONSelect                = require 'JSONSelect'
+  node = ESPRIMA.parse """
+    var x = null, y, z;
+    for( var i = 0; i < 10; i++ ){};"""
+  literals  = []
+  registry  = []
+  ESTRAVERSE.traverse node,
+    enter: ( node, parent ) ->
+      # whisper node
+      if node[ 'type' ] is 'Literal'
+        node[ 'x-subtype' ] = 'yay'
+      unless node[ 'x-id' ]?
+        node[ 'x-id' ] = registry.length
+        registry.push node
+      node[ 'x-parent-id' ] = parent[ 'x-id' ] if parent?
+      # literals.push node if node[ 'type' ] is 'Literal'
+  debug registry[ 0 ]
+  # debug JSONSelect.match '.type:val("Literal")', node
+  # debug JSONSelect.match ':has(:root > .type:val("Literal"))', node
+  # debug ESQUERY.query node, '[type="VariableDeclaration"]'
+  # # debug ESQUERY.query node, '[type="VariableDeclaration"] VariableDeclarator'
+  for node in ESQUERY.query node, 'Literal'
+    info node
+  debug ESQUERY.query node, '[x-subtype="yay"]'
+
+#-----------------------------------------------------------------------------------------------------------
 try_escodegen = ->
   ESCODEGEN                 = require 'escodegen'
   ESPRIMA                   = require 'esprima'
@@ -280,7 +311,8 @@ unless module.parent?
   # try_reduce()
   # try_splice()
   # try_escodegen()
-  try_esprima()
+  # try_esprima()
+  try_esquery()
 
 
 

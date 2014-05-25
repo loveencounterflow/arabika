@@ -26,6 +26,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
 CHR                       = require './3-chr'
 XRE                       = require './9-xre'
 
+show_matches = yes
 show_matches = no
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT this or similar helper to be part of FlowMatic ###
@@ -41,16 +42,16 @@ show = ( name, state ) ->
   ### Names: ###
 
   #.........................................................................................................
-  ### Leading character in names (excluding sigils): ###
-  'name-first-chr':     XRE '\\p{L}'
+  ### Leading and trailing characters in names (excluding sigils): ###
+  'identifier/first-chr':     XRE '\\p{L}'
+  'identifier/trailing-chrs': XRE '(?:-|\\p{L}|\\d)*'
 
-  #.........................................................................................................
-  ### Trailing characters in names: ###
-  'name-trailing-chrs': XRE '(?:-|\\p{L}|\\d)*'
-
-  #.........................................................................................................
+  #---------------------------------------------------------------------------------------------------------
   ### Character used to form URL-like routes out of crumbs: ###
-  'crumbs-joiner':       '/'
+  'crumb/joiner':           '/'
+  'crumb/this-scope':       '.'
+  'crumb/parent-scope':     '..'
+
 
   #---------------------------------------------------------------------------------------------------------
   ### Sigils: ###
@@ -61,7 +62,7 @@ show = ( name, state ) ->
     # '$':        'special' # used for interpolation!
     # '°':        ''
     # '^':        ''
-    '@':        'attribute' # ??? used for `this`
+    # '@':        'attribute' # ??? used for `this`
     '~':        'system'
     '.':        'hidden'
     '_':        'private'
@@ -71,21 +72,21 @@ show = ( name, state ) ->
 
   #.........................................................................................................
   ### Marks are like sigils, but with slightly different semantics. ###
-  'symbols-mark':  ':'
+  'symbol/mark':  ':'
 
 
 #===========================================================================================================
 # NAMES
 #-----------------------------------------------------------------------------------------------------------
-@$new.$name_first_chr = ( G, $ ) ->
-  R = ƒ.regex $[ 'name-first-chr' ]
+@$new.$identifier_first_chr = ( G, $ ) ->
+  R = ƒ.regex $[ 'identifier/first-chr' ]
   R = R.onMatch ( match ) -> match[ 0 ]
   R = R.describe 'first character of name'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.$name_trailing_chrs = ( G, $ ) ->
-  R = ƒ.regex $[ 'name-trailing-chrs' ]
+@$new.$identifier_trailing_chrs = ( G, $ ) ->
+  R = ƒ.regex $[ 'identifier/trailing-chrs' ]
   R = R.onMatch ( match ) -> match[ 0 ]
   R = R.describe 'trailing characters of name'
   return R
@@ -94,30 +95,37 @@ show = ( name, state ) ->
 @$new.$sigil = ( G, $ ) ->
   sigils = ( XRE.$esc key for key of $[ 'sigils'] ).join ''
   R = ƒ.regex XRE "[#{sigils}]"
-  R = R.onMatch ( match, state ) -> show '$sigil', state; match[ 0 ]
+  R = R.onMatch ( match, state ) -> match[ 0 ]
   R = R.describe 'sigil'
   return R
 
-# #-----------------------------------------------------------------------------------------------------------
-# @$new.$name = ( G, $ ) ->
-#   sigils = ( XRE.$esc key for key of $[ 'sigils'] ).join ''
-#   R = ƒ.seq ( XRE "[#{sigils}]?" ), ( -> G.$name_first_chr ), ( -> G.$name_trailing_chrs )
-#   R = R.onMatch ( match ) -> match.join ''
-#   R = R.describe 'name'
-#   return R
+#-----------------------------------------------------------------------------------------------------------
+@$new.identifier_with_sigil = ( G, $ ) ->
+  R = ƒ.seq ( G.$sigil ), ( -> G.$identifier_first_chr ), ( -> G.$identifier_trailing_chrs )
+  R = R.onMatch ( match, state ) ->
+    show 'name', state
+    ƒ.new.x_identifier_with_sigil match[ 0 ], match[ 1 ] + match[ 2 ]
+  R = R.describe 'identifier-with-sigil'
+  return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.$name = ( G, $ ) ->
-  R = ƒ.seq ( ƒ.optional -> G.$sigil ), ( -> G.$name_first_chr ), ( -> G.$name_trailing_chrs )
+@$new.identifier_without_sigil = ( G, $ ) ->
+  R = ƒ.seq ( -> G.$identifier_first_chr ), ( -> G.$identifier_trailing_chrs )
   R = R.onMatch ( match, state ) ->
     show '$name', state
-    ƒ.new.x_identifier match[ 0 ], match[ 1 ]
-  R = R.describe 'name'
+    ƒ.new.x_identifier_without_sigil match[ 0 ] + match[ 1 ]
+  R = R.describe 'name-without-sigil'
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.identifier = ( G, $ ) ->
+  R = ƒ.or ( -> G.identifier_with_sigil ), ( -> G.identifier_without_sigil )
+  R = R.describe 'identifier'
   return R
 
 #-----------------------------------------------------------------------------------------------------------
 @$new.$crumb = ( G, $ ) ->
-  # R = ƒ.seq ( ƒ.optional -> G.$sigil ), ( -> G.$name_first_chr ), ( -> G.$name_trailing_chrs )
+  # R = ƒ.seq ( ƒ.optional -> G.$sigil ), ( -> G.$identifier_first_chr ), ( -> G.$identifier_trailing_chrs )
   # R = R.onMatch ( match ) -> match.join ''
   # R = R.describe 'name'
   # return R
@@ -126,24 +134,24 @@ show = ( name, state ) ->
 #===========================================================================================================
 # ROUTES
 #-----------------------------------------------------------------------------------------------------------
-@$new.$route = ( G, $ ) ->
-  R = ƒ.repeatSeparated ( -> G.$name ), $[ 'crumbs-joiner' ]
+@$new.route = ( G, $ ) ->
+  R = ƒ.repeatSeparated ( -> G.identifier ), $[ 'crumb/joiner' ]
   R = R.onMatch ( match ) ->
     whisper match
-    ƒ.new.x_route ( match.join $[ 'crumbs-joiner' ] ), match
+    ƒ.new.x_route ( match.join $[ 'crumb/joiner' ] ), match
   R = R.describe 'route'
   return R
 
 
 #===========================================================================================================
 # SYMBOLS
-### TAINT `ƒ.or` is an expedient here ###
-# @$_symbol_sigil    = ƒ.or => ƒ.string @$[ 'symbol-sigil' ]
-
 #-----------------------------------------------------------------------------------------------------------
-@$new.$symbol = ( G, $ ) ->
-  R = ƒ.seq $[ 'symbols-mark' ], ( -> G.$name )
-  R = R.onMatch ( match ) -> ƒ.new.x_symbol ( match.join '' ), match[ 1 ]
+@$new.symbol = ( G, $ ) ->
+  R = ƒ.seq $[ 'symbol/mark' ], ( -> G.identifier )
+  R = R.onMatch ( match ) ->
+    mark        = match[ 0 ]
+    identifier  = match[ 1 ][ 'name' ]
+    return ƒ.new.x_symbol mark, mark + identifier, identifier
   return R
 
 
@@ -161,94 +169,105 @@ show = ( name, state ) ->
   #=========================================================================================================
   # NAMES
   #---------------------------------------------------------------------------------------------------------
-  '$name_first_chr: matches first character of names': ( test ) ->
+  '$identifier_first_chr: matches first character of names': ( test ) ->
     G = @
     $ = G.$
     probes = [ 'a', 'A', '𠀁',  ]
     for probe in probes
-      test.eq ( G.$name_first_chr.run probe ), probe
+      test.eq ( G.$identifier_first_chr.run probe ), probe
 
   #---------------------------------------------------------------------------------------------------------
-  '$name_trailing_chrs: matches trailing characters of names': ( test ) ->
+  '$identifier_trailing_chrs: matches trailing characters of names': ( test ) ->
     G = @
     $ = G.$
     probes = [ 'abc', 'abc-def', 'abc-def-45',  ]
     for probe in probes
       # whisper probe
-      test.eq ( G.$name_trailing_chrs.run probe ), probe
+      test.eq ( G.$identifier_trailing_chrs.run probe ), probe
 
   #---------------------------------------------------------------------------------------------------------
-  '$name: matches names': ( test ) ->
+  'identifier: matches identifiers': ( test ) ->
     G = @
     $ = G.$
-    probes = [ 'n', 'n0', 'readable-names', 'foo-32', ]
-    for probe in probes
-      # whisper probe
-      test.eq ( G.$name.run probe ), probe
+    probes_and_results = [
+      [ 'n', {"type":"Identifier","x-subtype":"identifier-without-sigil","name":"n"} ]
+      [ 'n0', {"type":"Identifier","x-subtype":"identifier-without-sigil","name":"n0"} ]
+      [ 'readable-names', {"type":"Identifier","x-subtype":"identifier-without-sigil","name":"readable-names"} ]
+      [ 'foo-32', {"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo-32"} ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      # debug probe, JSON.stringify G.identifier.run probe
+      test.eq ( G.identifier.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
-  '$name: matches names with sigils': ( test ) ->
+  'identifier: matches identifiers with sigils': ( test ) ->
     G = @
     $ = G.$
-    probes = [ '@n', '%n0', '_readable-names', '.foo-32', '~isa', ]
-    for probe in probes
-      # whisper probe
-      test.eq ( G.$name.run probe ), probe
+    probes_and_results = [
+      [ '~n', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"~","name":"n"} ]
+      [ '.n0', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":".","name":"n0"} ]
+      [ '_readable-names', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"_","name":"readable-names"} ]
+      [ '%foo-32', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"%","name":"foo-32"} ]
+      [ '!foo-32', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"foo-32"} ]
+      ]
+    for [ probe, result, ] in probes_and_results
+      # debug probe, JSON.stringify G.identifier.run probe
+      test.eq ( G.identifier.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
-  '$name: rejects non-names': ( test ) ->
+  'identifier: rejects non-identifiers': ( test ) ->
     G = @
     $ = G.$
     probes = [ '034', '-/-', '()', '؟?', ]
     for probe in probes
       # whisper probe
-      test.throws ( => G.$name.run probe ), /Expected/
+      test.throws ( => G.identifier.run probe ), /Expected/
 
 
   #=========================================================================================================
   # SYMBOLS
   #---------------------------------------------------------------------------------------------------------
-  '$[ "symbols-mark" ]: is a single character': ( test ) ->
+  '$[ "symbol/mark" ]: is a single character': ( test ) ->
     ### TAINT test will fail for Unicode 32bit code points ###
     G = @
     $ = G.$
     TYPES = require 'coffeenode-types'
-    test.ok TYPES.isa_text $[ 'symbols-mark' ]
-    test.ok $[ 'symbols-mark' ].length is 1
+    test.ok TYPES.isa_text $[ 'symbol/mark' ]
+    test.ok $[ 'symbol/mark' ].length is 1
 
   #---------------------------------------------------------------------------------------------------------
-  '$symbol: accepts sequences of symbols-mark, name chr': ( test ) ->
+  'symbol: accepts sequences of symbol/mark, name chrs': ( test ) ->
     G       = @
     $       = G.$
-    mark    = @$[ 'symbols-mark' ]
+    mark    = @$[ 'symbol/mark' ]
     probes_and_results = [
-      [ "#{mark}x", {"type":"Literal","x-subtype":"symbol","raw":":x","value":"x"}]
-      [ "#{mark}foo", {"type":"Literal","x-subtype":"symbol","raw":":foo","value":"foo"}]
-      [ "#{mark}Supercalifragilisticexpialidocious", {"type":"Literal","x-subtype":"symbol","raw":":Supercalifragilisticexpialidocious","value":"Supercalifragilisticexpialidocious"}]
+      [ "#{mark}x", {"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":x","value":"x"}, ]
+      [ "#{mark}foo", {"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":foo","value":"foo"}, ]
+      [ "#{mark}Supercalifragilisticexpialidocious", {"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":Supercalifragilisticexpialidocious","value":"Supercalifragilisticexpialidocious"}, ]
     ]
     #.......................................................................................................
     for [ probe, result, ] in probes_and_results
-      # debug JSON.stringify G.$symbol.run probe
-      test.eq ( G.$symbol.run probe ), result
+      # debug JSON.stringify G.symbol.run probe
+      test.eq ( G.symbol.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
-  '$symbol: rejects names with whitespace': ( test ) ->
+  'symbol: rejects names with whitespace': ( test ) ->
     G       = @
     $       = G.$
-    mark    = @$[ 'symbols-mark' ]
+    mark    = @$[ 'symbol/mark' ]
     probes  = [
       "#{mark}xxx xxx"
       "#{mark}foo\tbar"
       "#{mark}Super/cali/fragilistic/expialidocious" ]
     #.......................................................................................................
     for probe in probes
-      test.throws ( -> G.$symbol.run probe ), /Expected/
+      test.throws ( -> G.symbol.run probe ), /Expected/
 
 
   #=========================================================================================================
   # ROUTES
   #---------------------------------------------------------------------------------------------------------
-  '$route: accepts single name': ( test ) ->
+  'route: accepts single name': ( test ) ->
     ### TAINT test will fail for Unicode 32bit code points ###
     G = @
     $ = G.$
@@ -258,10 +277,11 @@ show = ( name, state ) ->
       ]
     #.......................................................................................................
     for [ probe, result, ] in probes_and_results
-      test.eq ( G.$route.run probe ), result
+      debug JSON.stringify G.route.run probe
+      # test.eq ( G.route.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
-  '$route: accepts crumbs separated by crumb joiners': ( test ) ->
+  'route: accepts crumbs separated by crumb joiners': ( test ) ->
     ### TAINT test will fail for Unicode 32bit code points ###
     G       = @
     $       = G.$
@@ -275,6 +295,6 @@ show = ( name, state ) ->
       ]
     #.......................................................................................................
     for [ probe, result, ] in probes_and_results
-      debug G.$route.run probe
-      test.eq ( G.$route.run probe ), result
+      debug JSON.stringify G.route.run probe
+      test.eq ( G.route.run probe ), result
 
