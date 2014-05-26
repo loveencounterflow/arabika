@@ -283,19 +283,19 @@ show = ( name, state ) ->
 
   #=========================================================================================================
   # ROUTES
-  # #---------------------------------------------------------------------------------------------------------
-  # 'route: accepts single name': ( test ) ->
-  #   ### TAINT test will fail for Unicode 32bit code points ###
-  #   G = @
-  #   $ = G.$
-  #   probes_and_results  = [
-  #     [ "abc",      [ "abc", ] ]
-  #     [ "國畫很美",     [ "國畫很美", ] ]
-  #     ]
-  #   #.......................................................................................................
-  #   for [ probe, result, ] in probes_and_results
-  #     debug JSON.stringify G.route.run probe
-  #     # test.eq ( G.route.run probe ), result
+  #---------------------------------------------------------------------------------------------------------
+  'route: accepts single name': ( test ) ->
+    ### TAINT test will fail for Unicode 32bit code points ###
+    G = @
+    $ = G.$
+    probes_and_results  = [
+      [ "abc",      {"type":"Literal","x-subtype":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]} ]
+      [ "!國畫很美",     {"type":"Literal","x-subtype":"relative-route","raw":"國畫很美","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"國畫很美"}]} ]
+      ]
+    #.......................................................................................................
+    for [ probe, result, ] in probes_and_results
+      # debug JSON.stringify G.route.run probe
+      test.eq ( G.route.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
   'route: accepts crumbs separated by crumb joiners': ( test ) ->
