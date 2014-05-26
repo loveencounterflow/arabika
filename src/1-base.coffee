@@ -32,7 +32,7 @@ XRE                       = require './9-xre'
 @$_use_keyword     = ƒ.or => ƒ.string @$[ 'use-keyword' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@use_argument     = ƒ.or NAME.$symbol, NUMBER.digits, TEXT.literal
+@use_argument     = ƒ.or NAME.symbol, NUMBER.digits, TEXT.literal
 
 #-----------------------------------------------------------------------------------------------------------
 @use_statement    = ( ƒ.seq @$_use_keyword, CHR.ilws, @use_argument )
@@ -50,13 +50,14 @@ XRE                       = require './9-xre'
   'use_argument: accepts symbols': ( test ) ->
     G = @
     $ = G.$
-    mark = NAME.$[ 'symbols-mark' ]
+    mark = NAME.$[ 'symbol/mark' ]
     probes_and_results = [
-      [ "#{mark}x",      "#{mark}x"   ]
-      [ "#{mark}foo",    "#{mark}foo" ]
+      [ "#{mark}x",      {"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":x","value":"x"}   ]
+      [ "#{mark}foo",    {"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":foo","value":"foo"} ]
       ]
     #.......................................................................................................
     for [ probe, result, ] in probes_and_results
+      # debug JSON.stringify @use_argument.run probe
       test.eq ( @use_argument.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
@@ -86,7 +87,7 @@ XRE                       = require './9-xre'
   'use_statement: accepts symbols, digits, strings': ( test ) ->
     G       = @
     $       = G.$
-    mark    = NAME.$[ 'symbols-mark' ]
+    mark    = NAME.$[ 'symbol/mark' ]
     keyword = G.$[ 'use-keyword' ]
     probes_and_results = [
       [ "use #{mark}x",       ƒ.new.x_use_statement keyword, "#{mark}x",   "x" ]
@@ -97,24 +98,30 @@ XRE                       = require './9-xre'
       ]
     #.......................................................................................................
     for [ probe, result, ] in probes_and_results
+      # debug JSON.stringify @use_statement.run probe
       test.eq ( @use_statement.run probe ), result
 
-  #---------------------------------------------------------------------------------------------------------
-  'use_statement: compilation to JS': ( test ) ->
-    G       = @
-    $       = G.$
-    mark    = NAME.$[ 'symbols-mark' ]
-    keyword = G.$[ 'use-keyword' ]
-    probes_and_results = [
-      [ "use #{mark}x",      """/* use ':x' */"""            ]
-      [ "use #{mark}foo",    """/* use ':foo' */"""          ]
-      [ "use 12349876",       """/* use '12349876' */"""      ]
-      [ "use 'some text'",    """/* use '\\'some text\\'' */""" ]
-      [ 'use "other text"' ,  """/* use '"other text"' */"""  ]
-      ]
-    #.......................................................................................................
-    for [ probe, result, ] in probes_and_results
-      test.eq ( test.as_js @use_statement.run probe ), result
+  # #---------------------------------------------------------------------------------------------------------
+  # 'use_statement: compilation to JS': ( test ) ->
+  #   G       = @
+  #   $       = G.$
+  #   mark    = NAME.$[ 'symbol/mark' ]
+  #   keyword = G.$[ 'use-keyword' ]
+  #   probes_and_results = [
+  #     [ "use #{mark}x",      {"type":"Literal","x-subtype":"use-statement","raw":"use ':x'","value":"use ':x'"} ]
+  #     [ "use #{mark}foo",    {"type":"Literal","x-subtype":"use-statement","raw":"use ':foo'","value":"use ':foo'"} ]
+  #     [ "use 12349876",       {"type":"Literal","x-subtype":"use-statement","raw":"use '12349876'","value":"use '12349876'"} ]
+  #     [ "use 'some text'",    {"type":"Literal","x-subtype":"use-statement","raw":"use '\\'some text\\''","value":"use '\\'some text\\''"} ]
+  #     [ 'use "other text"' ,  {"type":"Literal","x-subtype":"use-statement","raw":"use '\"other text\"'","value":"use '\"other text\"'"} ]
+  #     ]
+  #   #.......................................................................................................
+  #   for [ probe, result, ] in probes_and_results
+  #     # debug JSON.stringify @use_statement.run probe
+  #     test.eq ( test.as_js @use_statement.run probe ), result
+
+
+
+
 
 
 

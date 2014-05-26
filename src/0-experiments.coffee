@@ -182,6 +182,16 @@ try_splice = ->
   log d
 
 #-----------------------------------------------------------------------------------------------------------
+try_escodegen_1 = ->
+  ESCODEGEN                 = require 'escodegen'
+  ESPRIMA                   = require 'esprima'
+  escodegen_options         = ( require 'flowmatic/options' )[ 'escodegen' ]
+  NAME                      = require './6-name'
+  node = NAME.route.run 'foo/bar/baz'
+  debug ESCODEGEN.generate node, escodegen_options
+  debug ESCODEGEN.generate node[ 'value' ][ 0 ], escodegen_options
+
+#-----------------------------------------------------------------------------------------------------------
 try_esprima = ->
   ESCODEGEN                 = require 'escodegen'
   ESPRIMA                   = require 'esprima'
@@ -312,8 +322,9 @@ unless module.parent?
   # try_splice()
   # try_escodegen()
   # try_esprima()
-  try_esquery()
-
+  # try_esquery()
+  try_escodegen_1()
+  null
 
 
 
