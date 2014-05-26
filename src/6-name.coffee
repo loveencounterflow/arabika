@@ -134,11 +134,28 @@ show = ( name, state ) ->
 #===========================================================================================================
 # ROUTES
 #-----------------------------------------------------------------------------------------------------------
-@$new.route = ( G, $ ) ->
+@$new.relative_route = ( G, $ ) ->
   R = ƒ.repeatSeparated ( -> G.identifier ), $[ 'crumb/joiner' ]
   R = R.onMatch ( match ) ->
-    whisper match
-    ƒ.new.x_route ( match.join $[ 'crumb/joiner' ] ), match
+    raw = ( identifier[ 'name' ] for identifier in match ).join $[ 'crumb/joiner' ]
+    ƒ.new.x_relative_route raw, match
+  R = R.describe 'relative-route'
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.absolute_route = ( G, $ ) ->
+  R = ƒ.seq $[ 'crumb/joiner' ], ( -> G.relative_route )
+  R = R.onMatch ( match ) ->
+    [ slash, route, ]     = match
+    route[ 'raw' ]        = $[ 'crumb/joiner' ] + route[ 'raw' ]
+    route[ 'x-subtype' ]  = 'absolute-route'
+    return route
+  R = R.describe 'absolute-route'
+  return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.route = ( G, $ ) ->
+  R = ƒ.or ( -> G.absolute_route ), ( -> G.relative_route )
   R = R.describe 'route'
   return R
 
@@ -266,35 +283,72 @@ show = ( name, state ) ->
 
   #=========================================================================================================
   # ROUTES
-  #---------------------------------------------------------------------------------------------------------
-  'route: accepts single name': ( test ) ->
-    ### TAINT test will fail for Unicode 32bit code points ###
-    G = @
-    $ = G.$
-    probes_and_results  = [
-      [ "abc",      [ "abc", ] ]
-      [ "國畫很美",     [ "國畫很美", ] ]
-      ]
-    #.......................................................................................................
-    for [ probe, result, ] in probes_and_results
-      debug JSON.stringify G.route.run probe
-      # test.eq ( G.route.run probe ), result
+  # #---------------------------------------------------------------------------------------------------------
+  # 'route: accepts single name': ( test ) ->
+  #   ### TAINT test will fail for Unicode 32bit code points ###
+  #   G = @
+  #   $ = G.$
+  #   probes_and_results  = [
+  #     [ "abc",      [ "abc", ] ]
+  #     [ "國畫很美",     [ "國畫很美", ] ]
+  #     ]
+  #   #.......................................................................................................
+  #   for [ probe, result, ] in probes_and_results
+  #     debug JSON.stringify G.route.run probe
+  #     # test.eq ( G.route.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
   'route: accepts crumbs separated by crumb joiners': ( test ) ->
     ### TAINT test will fail for Unicode 32bit code points ###
     G       = @
     $       = G.$
-    joiner  = $[ 'crumbs-joiner' ]
+    joiner  = $[ 'crumb/joiner' ]
     probes_and_results  = [
-      [ "abc#{joiner}def", [ "abc", "def" ], ]
-      [ "foo#{joiner}bar", [ "foo", "bar" ], ]
-      [ "Super#{joiner}cali#{joiner}fragilistic#{joiner}expialidocious", ["Super", "cali", "fragilistic", "expialidocious" ], ]
-      # [ "abc#{joiner}def#{joiner}", [ "abc", "def" ], ]
-      [ "#{joiner}abc#{joiner}def", [ "abc", "def" ], ]
+      [ "abc#{joiner}def", {"type":"Literal","x-subtype":"relative-route","raw":"abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "foo#{joiner}bar", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
+      [ "Super#{joiner}cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"relative-route","raw":"Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
+      [ "#{joiner}abc#{joiner}def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
       ]
     #.......................................................................................................
     for [ probe, result, ] in probes_and_results
-      debug JSON.stringify G.route.run probe
+      # debug JSON.stringify G.route.run probe
       test.eq ( G.route.run probe ), result
+
+  #---------------------------------------------------------------------------------------------------------
+  'route: accepts leading slash': ( test ) ->
+    ### TAINT test will fail for Unicode 32bit code points ###
+    G       = @
+    $       = G.$
+    joiner  = $[ 'crumb/joiner' ]
+    probes_and_results  = [
+      [ "#{joiner}abc#{joiner}def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "#{joiner}foo#{joiner}bar", {"type":"Literal","x-subtype":"absolute-route","raw":"/foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
+      [ "#{joiner}Super#{joiner}cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"absolute-route","raw":"/Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
+      [ "#{joiner}abc#{joiner}def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      ]
+    #.......................................................................................................
+    for [ probe, result, ] in probes_and_results
+      # debug JSON.stringify G.route.run probe
+      test.eq ( G.route.run probe ), result
+
+  #---------------------------------------------------------------------------------------------------------
+  'route: accepts crumbs with sigils': ( test ) ->
+    ### TAINT test will fail for Unicode 32bit code points ###
+    G       = @
+    $       = G.$
+    joiner  = $[ 'crumb/joiner' ]
+    probes_and_results  = [
+      [ "!abc#{joiner}def", {"type":"Literal","x-subtype":"relative-route","raw":"abc/def","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "foo#{joiner}%bar", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"%","name":"bar"}]}, ]
+      [ "Super#{joiner}_cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"relative-route","raw":"Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"_","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
+      [ "#{joiner}abc#{joiner}~def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"~","name":"def"}]}, ]
+      ]
+    #.......................................................................................................
+    for [ probe, result, ] in probes_and_results
+      # debug JSON.stringify G.route.run probe
+      test.eq ( G.route.run probe ), result
+
+
+
+
 
