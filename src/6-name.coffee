@@ -154,7 +154,7 @@ show = ( name, state ) ->
   return ( sigil, name ) ->
     R                 = ƒ.new._XXX_node G, 'Identifier', 'identifier-with-sigil'
     R[ 'x-sigil'    ] = sigil
-    R[ 'name'       ] = name
+    R[ 'name'       ] = sigil + name
     return R
 
 #-----------------------------------------------------------------------------------------------------------
@@ -221,24 +221,33 @@ show = ( name, state ) ->
       when 'Literal'
         switch subtype = node[ 'x-subtype' ]
           when 'relative-route'
-            crumbs = node[ 'value' ]
+            crumbs  = node[ 'value' ]
+            R       = ƒ.new.identifier null, '$scope'
             for crumb, idx in crumbs
               crumb_type    = crumb[ 'type' ]
               crumb_subtype = crumb[ 'x-subtype' ]
               unless crumb_type is 'Identifier'
                 throw new Error "unknown crumb type #{rpr crumb_type}"
-              unless crumb_subtype is 'identifier-without-sigil'
-                throw new Error "unknown crumb subtype #{rpr crumb_subtype}"
-              if idx is 0
-                R = ƒ.new.identifier null, crumb[ 'name' ]
-              else #if idx is 1
-                name      = crumb[ 'name' ]
-                property  = ƒ.new.literal null, ( rpr name ), name
-                R         = ƒ.new.member_expression null, true, R, property
-              # else
-              #   last_node = R
-              #   R = ƒ.new.member_expression null, true, last_node, null
+              name      = crumb[ 'name' ]
+              property  = ƒ.new.literal null, ( rpr name ), name
+              R         = ƒ.new.member_expression null, true, R, property
             return R
+          # when 'relative-route'
+          #   crumbs = node[ 'value' ]
+          #   for crumb, idx in crumbs
+          #     crumb_type    = crumb[ 'type' ]
+          #     crumb_subtype = crumb[ 'x-subtype' ]
+          #     unless crumb_type is 'Identifier'
+          #       throw new Error "unknown crumb type #{rpr crumb_type}"
+          #     unless crumb_subtype is 'identifier-without-sigil'
+          #       throw new Error "unknown crumb subtype #{rpr crumb_subtype}"
+          #     if idx is 0
+          #       R = ƒ.new.identifier null, crumb[ 'name' ]
+          #     else
+          #       name      = crumb[ 'name' ]
+          #       property  = ƒ.new.literal null, ( rpr name ), name
+          #       R         = ƒ.new.member_expression null, true, R, property
+          #   return R
           else
             throw new Error "unknown node subtype #{rpr subtype}"
       #.......................................................................................................
@@ -300,11 +309,11 @@ show = ( name, state ) ->
     G = @
     $ = G.$
     probes_and_matchers = [
-      [ '~n', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"~","name":"n"} ]
-      [ '.n0', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":".","name":"n0"} ]
-      [ '_readable-names', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"_","name":"readable-names"} ]
-      [ '%foo-32', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"%","name":"foo-32"} ]
-      [ '!foo-32', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"foo-32"} ]
+      [ '~n', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"~","name":"~n"} ]
+      [ '.n0', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":".","name":".n0"} ]
+      [ '_readable-names', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"_","name":"_readable-names"} ]
+      [ '%foo-32', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"%","name":"%foo-32"} ]
+      [ '!foo-32', {"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"!foo-32"} ]
       ]
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.identifier.run probe
@@ -371,7 +380,7 @@ show = ( name, state ) ->
     $ = G.$
     probes_and_matchers  = [
       [ "abc",      {"type":"Literal","x-subtype":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]} ]
-      [ "!國畫很美",     {"type":"Literal","x-subtype":"relative-route","raw":"國畫很美","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"國畫很美"}]} ]
+      [ "!國畫很美",     {"type":"Literal","x-subtype":"relative-route","raw":"!國畫很美","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"!國畫很美"}]} ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
@@ -394,7 +403,7 @@ show = ( name, state ) ->
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.route.run probe
-      debug result
+      # debug result
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
@@ -422,10 +431,10 @@ show = ( name, state ) ->
     $       = G.$
     joiner  = $[ 'crumb/joiner' ]
     probes_and_matchers  = [
-      [ "!abc#{joiner}def", {"type":"Literal","x-subtype":"relative-route","raw":"abc/def","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
-      [ "foo#{joiner}%bar", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"%","name":"bar"}]}, ]
-      [ "Super#{joiner}_cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"relative-route","raw":"Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"_","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
-      [ "#{joiner}abc#{joiner}~def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"~","name":"def"}]}, ]
+      [ "!abc#{joiner}def", {"type":"Literal","x-subtype":"relative-route","raw":"!abc/def","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"!abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "foo#{joiner}%bar", {"type":"Literal","x-subtype":"relative-route","raw":"foo/%bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"%","name":"%bar"}]}, ]
+      [ "Super#{joiner}_cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"relative-route","raw":"Super/_cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"_","name":"_cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
+      [ "#{joiner}abc#{joiner}~def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/~def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"~","name":"~def"}]}, ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
@@ -441,7 +450,12 @@ show = ( name, state ) ->
     ESCODEGEN = require 'escodegen'
     G       = @
     $       = G.$
-    source  = """foo/bar/baz"""
-    node    = G.route.run source
-    debug result = G.as.standard node
-    info ESCODEGEN.generate result
+    probes_and_matchers = [
+      [ """foo/bar/!baz""", {"type":"MemberExpression","x-subtype":null,"computed":true,"object":{"type":"MemberExpression","x-subtype":null,"computed":true,"object":{"type":"MemberExpression","x-subtype":null,"computed":true,"object":{"type":"Identifier","x-subtype":null,"name":"$scope"},"property":{"type":"Literal","x-subtype":null,"raw":"'foo'","value":"foo"}},"property":{"type":"Literal","x-subtype":null,"raw":"'bar'","value":"bar"}},"property":{"type":"Literal","x-subtype":null,"raw":"'!baz'","value":"!baz"}} ]
+      ]
+    for [ probe, matcher, ] in probes_and_matchers
+      node    = G.route.run probe
+      result  = ƒ.new._delete_grammar_references G.as.standard node
+      debug JSON.stringify result
+      info ESCODEGEN.generate result
+      test.eq result, matcher
