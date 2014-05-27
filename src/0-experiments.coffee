@@ -231,9 +231,12 @@ try_esquery = ->
 
 #-----------------------------------------------------------------------------------------------------------
 try_esquery_1 = ->
+  ESPRIMA                   = require 'esprima'
   ESQUERY                   = require 'esquery'
-  node  = {"type":"Literal","x-subtype":"relative-route","raw":"abc/def","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}
-  nodes = ESQUERY.query node, '[type="Identifier"]'
+  source  = """foo[ 'bar' ][ 'baz' ]"""
+  node    = ESPRIMA.parse source
+  debug node
+  nodes   = ESQUERY.query node, '[type="Identifier"]'
   info nodes.length
   info nodes
 
