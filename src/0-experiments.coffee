@@ -203,7 +203,7 @@ try_esquery = ->
   ESPRIMA                   = require 'esprima'
   ESQUERY                   = require 'esquery'
   ESTRAVERSE                = require 'estraverse'
-  JSONSelect                = require 'JSONSelect'
+  # JSONSelect                = require 'JSONSelect'
   node = ESPRIMA.parse """
     var x = null, y, z;
     for( var i = 0; i < 10; i++ ){};"""
@@ -218,15 +218,24 @@ try_esquery = ->
         node[ 'x-id' ] = registry.length
         registry.push node
       node[ 'x-parent-id' ] = parent[ 'x-id' ] if parent?
+      debug node
       # literals.push node if node[ 'type' ] is 'Literal'
-  debug registry[ 0 ]
+  # debug registry[ 0 ]
   # debug JSONSelect.match '.type:val("Literal")', node
   # debug JSONSelect.match ':has(:root > .type:val("Literal"))', node
   # debug ESQUERY.query node, '[type="VariableDeclaration"]'
   # # debug ESQUERY.query node, '[type="VariableDeclaration"] VariableDeclarator'
-  for node in ESQUERY.query node, 'Literal'
-    info node
-  debug ESQUERY.query node, '[x-subtype="yay"]'
+  # for node in ESQUERY.query node, 'Literal'
+  #   info node
+  # debug ESQUERY.query node, '[x-subtype="yay"]'
+
+#-----------------------------------------------------------------------------------------------------------
+try_esquery_1 = ->
+  ESQUERY                   = require 'esquery'
+  node  = {"type":"Literal","x-subtype":"relative-route","raw":"abc/def","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}
+  nodes = ESQUERY.query node, '[type="Identifier"]'
+  info nodes.length
+  info nodes
 
 #-----------------------------------------------------------------------------------------------------------
 try_escodegen = ->
@@ -323,7 +332,8 @@ unless module.parent?
   # try_escodegen()
   # try_esprima()
   # try_esquery()
-  try_escodegen_1()
+  try_esquery_1()
+  # try_escodegen_1()
   null
 
 
