@@ -51,37 +51,42 @@ XRE                       = require './9-xre'
     G = @
     $ = G.$
     mark = NAME.$[ 'symbol/mark' ]
-    probes_and_results = [
+    probes_and_matchers = [
       [ "#{mark}x",      {"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":x","value":"x"}   ]
       [ "#{mark}foo",    {"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":foo","value":"foo"} ]
       ]
     #.......................................................................................................
-    for [ probe, result, ] in probes_and_results
+    for [ probe, matcher, ] in probes_and_matchers
+      result = ƒ.new._delete_grammar_references G.use_argument.run probe
       # debug JSON.stringify @use_argument.run probe
-      test.eq ( @use_argument.run probe ), result
+      test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
   'use_argument: accepts digits': ( test ) ->
     G = @
     $ = G.$
-    probes_and_results = [
+    probes_and_matchers = [
       [ "12349876",       ƒ.new.literal 'digits', "12349876", "12349876" ]
       ]
     #.......................................................................................................
-    for [ probe, result, ] in probes_and_results
-      test.eq ( @use_argument.run probe ), result
+    for [ probe, matcher, ] in probes_and_matchers
+      result = ƒ.new._delete_grammar_references G.use_argument.run probe
+      # debug JSON.stringify @use_argument.run probe
+      test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
   'use_argument: accepts strings': ( test ) ->
     G = @
     $ = G.$
-    probes_and_results = [
+    probes_and_matchers = [
       [ "'some text'",    ƒ.new.literal 'text', "'some text'", "some text" ]
       [ '"other text"' ,  ƒ.new.literal 'text', '"other text"', 'other text' ]
       ]
     #.......................................................................................................
-    for [ probe, result, ] in probes_and_results
-      test.eq ( @use_argument.run probe ), result
+    for [ probe, matcher, ] in probes_and_matchers
+      result = ƒ.new._delete_grammar_references G.use_argument.run probe
+      # debug JSON.stringify @use_argument.run probe
+      test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
   'use_statement: accepts symbols, digits, strings': ( test ) ->
@@ -89,7 +94,7 @@ XRE                       = require './9-xre'
     $       = G.$
     mark    = NAME.$[ 'symbol/mark' ]
     keyword = G.$[ 'use-keyword' ]
-    probes_and_results = [
+    probes_and_matchers = [
       [ "use #{mark}x",       ƒ.new.x_use_statement keyword, "#{mark}x",   "x" ]
       [ "use #{mark}foo",     ƒ.new.x_use_statement keyword, "#{mark}foo", "foo" ]
       [ "use 12349876",       ƒ.new.x_use_statement keyword, "12349876", "12349876" ]
@@ -97,9 +102,10 @@ XRE                       = require './9-xre'
       [ 'use "other text"' ,  ƒ.new.x_use_statement keyword, '"other text"', 'other text' ]
       ]
     #.......................................................................................................
-    for [ probe, result, ] in probes_and_results
-      # debug JSON.stringify @use_statement.run probe
-      test.eq ( @use_statement.run probe ), result
+    for [ probe, matcher, ] in probes_and_matchers
+      result = ƒ.new._delete_grammar_references G.use_statement.run probe
+      # debug JSON.stringify result
+      test.eq result, matcher
 
   # #---------------------------------------------------------------------------------------------------------
   # 'use_statement: compilation to JS': ( test ) ->
@@ -107,7 +113,7 @@ XRE                       = require './9-xre'
   #   $       = G.$
   #   mark    = NAME.$[ 'symbol/mark' ]
   #   keyword = G.$[ 'use-keyword' ]
-  #   probes_and_results = [
+  #   probes_and_matchers = [
   #     [ "use #{mark}x",      {"type":"Literal","x-subtype":"use-statement","raw":"use ':x'","value":"use ':x'"} ]
   #     [ "use #{mark}foo",    {"type":"Literal","x-subtype":"use-statement","raw":"use ':foo'","value":"use ':foo'"} ]
   #     [ "use 12349876",       {"type":"Literal","x-subtype":"use-statement","raw":"use '12349876'","value":"use '12349876'"} ]
@@ -115,7 +121,7 @@ XRE                       = require './9-xre'
   #     [ 'use "other text"' ,  {"type":"Literal","x-subtype":"use-statement","raw":"use '\"other text\"'","value":"use '\"other text\"'"} ]
   #     ]
   #   #.......................................................................................................
-  #   for [ probe, result, ] in probes_and_results
+  #   for [ probe, matcher, ] in probes_and_matchers
   #     # debug JSON.stringify @use_statement.run probe
   #     test.eq ( test.as_js @use_statement.run probe ), result
 

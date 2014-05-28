@@ -3,10 +3,6 @@
 
 
 
-
-
-
-
 ############################################################################################################
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
@@ -26,14 +22,14 @@ BNP                       = require 'coffeenode-bitsnpieces'
 CHR                       = require './3-chr'
 XRE                       = require './9-xre'
 
-show_matches = yes
-show_matches = no
-#-----------------------------------------------------------------------------------------------------------
-### TAINT this or similar helper to be part of FlowMatic ###
-show = ( name, state ) ->
-  if show_matches
-    whisper "matching: #{name}", rpr state[ 'internal' ][ 'text' ][ state.pos() ... state.endpos() ]
-  return null
+# show_matches = yes
+# show_matches = no
+# #-----------------------------------------------------------------------------------------------------------
+# ### TAINT this or similar helper to be part of FlowMatic ###
+# show = ( name, state ) ->
+#   if show_matches
+#     whisper "matching: #{name}", rpr state[ 'internal' ][ 'text' ][ state.pos() ... state.endpos() ]
+#   return null
 
 #-----------------------------------------------------------------------------------------------------------
 @$ =
@@ -103,8 +99,8 @@ show = ( name, state ) ->
 @$new.identifier_with_sigil = ( G, $ ) ->
   R = ƒ.seq ( G.$sigil ), ( -> G.$identifier_first_chr ), ( -> G.$identifier_trailing_chrs )
   R = R.onMatch ( match, state ) ->
-    show 'name', state
-    G.new_node.x_identifier_with_sigil match[ 0 ], match[ 1 ] + match[ 2 ]
+    # show 'name', state
+    G.new_node.identifier_with_sigil match[ 0 ], match[ 1 ] + match[ 2 ]
   R = R.describe 'identifier-with-sigil'
   return R
 
@@ -112,8 +108,8 @@ show = ( name, state ) ->
 @$new.identifier_without_sigil = ( G, $ ) ->
   R = ƒ.seq ( -> G.$identifier_first_chr ), ( -> G.$identifier_trailing_chrs )
   R = R.onMatch ( match, state ) ->
-    show '$name', state
-    G.new_node.x_identifier_without_sigil match[ 0 ] + match[ 1 ]
+    # show '$name', state
+    G.new_node.identifier_without_sigil match[ 0 ] + match[ 1 ]
   R = R.describe 'name-without-sigil'
   return R
 
@@ -124,7 +120,7 @@ show = ( name, state ) ->
   return R
 
 #-----------------------------------------------------------------------------------------------------------
-@$new.$crumb = ( G, $ ) ->
+# @$new.$crumb = ( G, $ ) ->
   # R = ƒ.seq ( ƒ.optional -> G.$sigil ), ( -> G.$identifier_first_chr ), ( -> G.$identifier_trailing_chrs )
   # R = R.onMatch ( match ) -> match.join ''
   # R = R.describe 'name'
@@ -138,7 +134,7 @@ show = ( name, state ) ->
   R = ƒ.repeatSeparated ( -> G.identifier ), $[ 'crumb/joiner' ]
   R = R.onMatch ( match ) ->
     raw = ( identifier[ 'name' ] for identifier in match ).join $[ 'crumb/joiner' ]
-    G.new_node.x_relative_route raw, match
+    G.new_node.relative_route raw, match
   R = R.describe 'relative-route'
   return R
 
@@ -168,7 +164,7 @@ show = ( name, state ) ->
   R = R.onMatch ( match ) ->
     mark        = match[ 0 ]
     identifier  = match[ 1 ][ 'name' ]
-    return G.new_node.x_symbol mark, mark + identifier, identifier
+    return G.new_node.symbol mark, mark + identifier, identifier
   return R
 
 
@@ -179,7 +175,7 @@ show = ( name, state ) ->
   RR = {}
 
   #---------------------------------------------------------------------------------------------------------
-  RR.x_symbol = ( mark, raw, value ) ->
+  RR.symbol = ( mark, raw, value ) ->
       R                 = ƒ.new._XXX_node G, 'Literal', 'symbol'
       R[ 'x-mark'     ] = mark
       R[ 'raw'        ] = raw
@@ -187,21 +183,21 @@ show = ( name, state ) ->
       return R
 
   #---------------------------------------------------------------------------------------------------------
-  RR.x_relative_route = ( raw, value ) ->
+  RR.relative_route = ( raw, value ) ->
       R                 = ƒ.new._XXX_node G, 'Literal', 'relative-route'
       R[ 'raw'        ] = raw
       R[ 'value'      ] = value
       return R
 
   #---------------------------------------------------------------------------------------------------------
-  RR.x_identifier_with_sigil = ( sigil, name ) ->
+  RR.identifier_with_sigil = ( sigil, name ) ->
       R                 = ƒ.new._XXX_node G, 'Identifier', 'identifier-with-sigil'
       R[ 'x-sigil'    ] = sigil
       R[ 'name'       ] = sigil + name
       return R
 
   #---------------------------------------------------------------------------------------------------------
-  RR.x_identifier_without_sigil = ( name ) ->
+  RR.identifier_without_sigil = ( name ) ->
       R                 = ƒ.new._XXX_node G, 'Identifier', 'identifier-without-sigil'
       R[ 'name'       ] = name
       return R
@@ -224,8 +220,9 @@ show = ( name, state ) ->
         switch subtype = node[ 'x-subtype' ]
           #.................................................................................................
           # solution 3
-          when 'relative-route'
+          when 'relative-route', 'absolute-route'
             ### TAINT how to identify the current scope? ###
+            root_name = if subtype is 'relative-route' then 'scope' else 'global'
             crumbs  = node[ 'value' ]
             names   = []
             for crumb, idx in crumbs
@@ -235,7 +232,7 @@ show = ( name, state ) ->
                 throw new Error "unknown crumb type #{rpr crumb_type}"
               names.push crumb[ 'name' ]
             names = ( "[ #{rpr name} ]" for name in names ).join ''
-            source = """$FM[ 'scope' ]#{names}"""
+            source = """$FM[ #{rpr root_name} ]#{names}"""
             return source
           else
             throw new Error "unknown node subtype #{rpr subtype}"
@@ -471,7 +468,7 @@ show = ( name, state ) ->
   #=========================================================================================================
   # TRANSLATORS
   #---------------------------------------------------------------------------------------------------------
-  'as.coffee: render route as CoffeeScript': ( test ) ->
+  'as.coffee: render relative route as CoffeeScript': ( test ) ->
     G       = @
     $       = G.$
     probes_and_matchers = [
@@ -484,7 +481,7 @@ show = ( name, state ) ->
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
-  'as.js: render route as JavaScript': ( test ) ->
+  'as.js: render relative route as JavaScript': ( test ) ->
     G       = @
     $       = G.$
     probes_and_matchers = [
@@ -498,11 +495,51 @@ show = ( name, state ) ->
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
-  'as.standard: standardize route': ( test ) ->
+  'as.standard: standardize relative route': ( test ) ->
     G       = @
     $       = G.$
     probes_and_matchers = [
       [ """foo/bar/!baz""", {"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"Identifier","name":"$FM"},"property":{"type":"Literal","value":"scope","raw":"'scope'"}},"property":{"type":"Literal","value":"foo","raw":"'foo'"}},"property":{"type":"Literal","value":"bar","raw":"'bar'"}},"property":{"type":"Literal","value":"!baz","raw":"'!baz'"}}}]} ]
+      ]
+    for [ probe, matcher, ] in probes_and_matchers
+      node    = G.route.run probe
+      result  = G.as.standard node
+      # debug JSON.stringify result
+      test.eq result, matcher
+
+  #---------------------------------------------------------------------------------------------------------
+  'as.coffee: render absolute route as CoffeeScript': ( test ) ->
+    G       = @
+    $       = G.$
+    probes_and_matchers = [
+      [ """/foo/bar/!baz""", "$FM[ 'global' ][ 'foo' ][ 'bar' ][ '!baz' ]" ]
+      ]
+    for [ probe, matcher, ] in probes_and_matchers
+      node    = G.route.run probe
+      result  = G.as.coffee node
+      # debug JSON.stringify result
+      test.eq result, matcher
+
+  #---------------------------------------------------------------------------------------------------------
+  'as.js: render absolute route as JavaScript': ( test ) ->
+    G       = @
+    $       = G.$
+    probes_and_matchers = [
+      [ """/foo/bar/!baz""", "$FM['global']['foo']['bar']['!baz'];\n" ]
+      ]
+    for [ probe, matcher, ] in probes_and_matchers
+      node    = G.route.run probe
+      result  = G.as.coffee node
+      result  = G.as.js node
+      # debug JSON.stringify result
+      test.eq result, matcher
+
+  #---------------------------------------------------------------------------------------------------------
+  'as.standard: standardize absolute route': ( test ) ->
+    G       = @
+    $       = G.$
+    probes_and_matchers = [
+      [ """/foo/bar/!baz""", {"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"Identifier","name":"$FM"},"property":{"type":"Literal","value":"global","raw":"'global'"}},"property":{"type":"Literal","value":"foo","raw":"'foo'"}},"property":{"type":"Literal","value":"bar","raw":"'bar'"}},"property":{"type":"Literal","value":"!baz","raw":"'!baz'"}}}]} ]
       ]
     for [ probe, matcher, ] in probes_and_matchers
       node    = G.route.run probe
