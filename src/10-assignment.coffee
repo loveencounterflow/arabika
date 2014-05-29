@@ -79,26 +79,20 @@ NAME                      = require './6-name'
     switch type = node[ 'type' ]
       #.......................................................................................................
       when 'Literal'
-        null
-      #   switch subtype = node[ 'x-subtype' ]
-      #     #.................................................................................................
-      #     # solution 3
-      #     when 'relative-route', 'absolute-route'
-      #       ### TAINT how to identify the current scope? ###
-      #       root_name = if subtype is 'relative-route' then 'scope' else 'global'
-      #       crumbs  = node[ 'value' ]
-      #       names   = []
-      #       for crumb, idx in crumbs
-      #         crumb_type    = crumb[ 'type' ]
-      #         crumb_subtype = crumb[ 'x-subtype' ]
-      #         unless crumb_type is 'Identifier'
-      #           throw new Error "unknown crumb type #{rpr crumb_type}"
-      #         names.push crumb[ 'name' ]
-      #       names = ( "[ #{rpr name} ]" for name in names ).join ''
-      #       source = """$FM[ #{rpr root_name} ]#{names}"""
-      #       return source
-      #     else
-      #       throw new Error "unknown node subtype #{rpr subtype}"
+        switch subtype = node[ 'x-subtype' ]
+          #.................................................................................................
+          when 'assignment'
+            { lhs, 'x-mark': mark, rhs } = node
+            lhs_result  = ƒ.as.coffee lhs
+            rhs_result  = ƒ.as.coffee rhs
+            # whisper lhs_result
+            # whisper rhs_result
+            target      = """#{lhs_result[ 'target' ]} = #{rhs_result[ 'target' ]}"""
+            taints      = ƒ.as._collect_taints lhs_result, rhs_result
+            whisper taints
+            return target: target, taints: taints
+          else
+            throw new Error "unknown node subtype #{rpr subtype}"
       #.......................................................................................................
       else
         throw new Error "unknown node type #{rpr type}"
@@ -144,21 +138,39 @@ NAME                      = require './6-name'
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.assignment.run probe
-      debug JSON.stringify result
+      # debug JSON.stringify result
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
-  '$assignment: accepts assignment with name': ( test ) ->
+  '$assignment: accepts assignment with route': ( test ) ->
+    G       = @
+    $       = G.$
+    joiner  = $[ 'crumb/joiner' ]
+    probes_and_matchers  = [
+      [ "yet#{joiner}another#{joiner}route: 42", {"type":"Literal","x-subtype":"assignment","x-mark":":","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]},"rhs":{"type":"Literal","x-subtype":"integer","raw":"42","value":42}}, ]
+      [ "#{joiner}chinese#{joiner}𠀁: '42'", {"type":"Literal","x-subtype":"assignment","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"𠀁","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"𠀁"}]},"x-mark":":","rhs":{"type":"Literal","x-subtype":"text","raw":"'42'","value":"42"}}, ]
+      ]
+    #.......................................................................................................
+    for [ probe, matcher, ] in probes_and_matchers
+      result = ƒ.new._delete_grammar_references G.assignment.run probe
+      # debug JSON.stringify result#, null, '  '
+      # test.eq result, matcher
+
+  #---------------------------------------------------------------------------------------------------------
+  'as.coffee: render assignment as CoffeeScript': ( test ) ->
     G       = @
     $       = G.$
     joiner  = $[ 'crumb/joiner' ]
     probes_and_matchers  = [
       [ "yet/another/route: 42", {"type":"Literal","x-subtype":"assignment","x-mark":":","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]},"rhs":{"type":"Literal","x-subtype":"integer","raw":"42","value":42}}, ]
-      [ "/chinese/𠀁: '42'", {"type":"Literal","x-subtype":"assignment","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"𠀁","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"𠀁"}]},"x-mark":":","rhs":{"type":"Literal","x-subtype":"text","raw":"'42'","value":"42"}}, ]
+      [ "/chinese/𠀁: 'some text'", {"type":"Literal","x-subtype":"assignment","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"𠀁","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"𠀁"}]},"x-mark":":","rhs":{"type":"Literal","x-subtype":"text","raw":"'42'","value":"42"}}, ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
-      result = ƒ.new._delete_grammar_references G.assignment.run probe
-      debug JSON.stringify result
-      # test.eq result, matcher
+      node        = G.assignment.run probe
+      translation = G.as.coffee node
+      result      = ƒ.as.coffee.target translation
+      # debug JSON.stringify result
+      debug '\n' + result
+    #   # test.eq result, matcher
 

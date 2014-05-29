@@ -231,53 +231,53 @@ XRE                       = require './9-xre'
               unless crumb_type is 'Identifier'
                 throw new Error "unknown crumb type #{rpr crumb_type}"
               names.push crumb[ 'name' ]
-            names = ( "[ #{rpr name} ]" for name in names ).join ''
-            source = """$FM[ #{rpr root_name} ]#{names}"""
-            return source
+            names   = ( "[ #{rpr name} ]" for name in names ).join ''
+            target  = """$FM[ #{rpr root_name} ]#{names}"""
+            return target: target
           else
             throw new Error "unknown node subtype #{rpr subtype}"
       #.......................................................................................................
       else
         throw new Error "unknown node type #{rpr type}"
 
-  #-----------------------------------------------------------------------------------------------------------
-  RR.js = ( node ) ->
-    COFFEE        = require 'coffee-script'
-    source_coffee = G.as.coffee node
-    return COFFEE.compile source_coffee, bare: yes
+  # #-----------------------------------------------------------------------------------------------------------
+  # RR.js = ( node ) ->
+  #   COFFEE        = require 'coffee-script'
+  #   source_coffee = ( G.as.coffee node )[ 'target' ]
+  #   return COFFEE.compile source_coffee, bare: yes
 
-  #-----------------------------------------------------------------------------------------------------------
-  ### TAINT `standard` is not a good name for this method ###
-  RR.standard = ( node ) ->
-    ESPRIMA   = require 'esprima'
-    source_js = G.as.js node
-    return ESPRIMA.parse source_js
-    # #.........................................................................................................
-    # switch type = node[ 'type' ]
-    #   #.......................................................................................................
-    #   when 'Literal'
-    #     switch subtype = node[ 'x-subtype' ]
-    #       #.................................................................................................
-    #       when 'relative-route'
-    #         crumbs  = node[ 'value' ]
-    #         R       = ƒ.new.identifier null, '$scope'
-    #         for crumb, idx in crumbs
-    #           crumb_type    = crumb[ 'type' ]
-    #           crumb_subtype = crumb[ 'x-subtype' ]
-    #           unless crumb_type is 'Identifier'
-    #             throw new Error "unknown crumb type #{rpr crumb_type}"
-    #           name      = crumb[ 'name' ]
-    #           property  = ƒ.new.literal null, ( rpr name ), name
-    #           R         = ƒ.new.member_expression null, true, R, property
-    #         return R
-    #       else
-    #         throw new Error "unknown node subtype #{rpr subtype}"
-    #   #.......................................................................................................
-    #   else
-    #     throw new Error "unknown node type #{rpr type}"
+  # #-----------------------------------------------------------------------------------------------------------
+  # ### TAINT `standard` is not a good name for this method ###
+  # RR.standard = ( node ) ->
+  #   ESPRIMA   = require 'esprima'
+  #   source_js = G.as.js node
+  #   return ESPRIMA.parse source_js
+  #   # #.........................................................................................................
+  #   # switch type = node[ 'type' ]
+  #   #   #.......................................................................................................
+  #   #   when 'Literal'
+  #   #     switch subtype = node[ 'x-subtype' ]
+  #   #       #.................................................................................................
+  #   #       when 'relative-route'
+  #   #         crumbs  = node[ 'value' ]
+  #   #         R       = ƒ.new.identifier null, '$scope'
+  #   #         for crumb, idx in crumbs
+  #   #           crumb_type    = crumb[ 'type' ]
+  #   #           crumb_subtype = crumb[ 'x-subtype' ]
+  #   #           unless crumb_type is 'Identifier'
+  #   #             throw new Error "unknown crumb type #{rpr crumb_type}"
+  #   #           name      = crumb[ 'name' ]
+  #   #           property  = ƒ.new.literal null, ( rpr name ), name
+  #   #           R         = ƒ.new.member_expression null, true, R, property
+  #   #         return R
+  #   #       else
+  #   #         throw new Error "unknown node subtype #{rpr subtype}"
+  #   #   #.......................................................................................................
+  #   #   else
+  #   #     throw new Error "unknown node type #{rpr type}"
 
-  #.........................................................................................................
-  return RR
+  # #.........................................................................................................
+  # return RR
 
 
 #===========================================================================================================
@@ -476,34 +476,7 @@ XRE                       = require './9-xre'
       ]
     for [ probe, matcher, ] in probes_and_matchers
       node    = G.route.run probe
-      result  = G.as.coffee node
-      # debug JSON.stringify result
-      test.eq result, matcher
-
-  #---------------------------------------------------------------------------------------------------------
-  'as.js: render relative route as JavaScript': ( test ) ->
-    G       = @
-    $       = G.$
-    probes_and_matchers = [
-      [ """foo/bar/!baz""", "$FM['scope']['foo']['bar']['!baz'];\n" ]
-      ]
-    for [ probe, matcher, ] in probes_and_matchers
-      node    = G.route.run probe
-      result  = G.as.coffee node
-      result  = G.as.js node
-      # debug JSON.stringify result
-      test.eq result, matcher
-
-  #---------------------------------------------------------------------------------------------------------
-  'as.standard: standardize relative route': ( test ) ->
-    G       = @
-    $       = G.$
-    probes_and_matchers = [
-      [ """foo/bar/!baz""", {"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"Identifier","name":"$FM"},"property":{"type":"Literal","value":"scope","raw":"'scope'"}},"property":{"type":"Literal","value":"foo","raw":"'foo'"}},"property":{"type":"Literal","value":"bar","raw":"'bar'"}},"property":{"type":"Literal","value":"!baz","raw":"'!baz'"}}}]} ]
-      ]
-    for [ probe, matcher, ] in probes_and_matchers
-      node    = G.route.run probe
-      result  = G.as.standard node
+      result  = ( G.as.coffee node )[ 'target' ]
       # debug JSON.stringify result
       test.eq result, matcher
 
@@ -516,33 +489,59 @@ XRE                       = require './9-xre'
       ]
     for [ probe, matcher, ] in probes_and_matchers
       node    = G.route.run probe
-      result  = G.as.coffee node
+      result  = ( G.as.coffee node )[ 'target' ]
       # debug JSON.stringify result
       test.eq result, matcher
 
-  #---------------------------------------------------------------------------------------------------------
-  'as.js: render absolute route as JavaScript': ( test ) ->
-    G       = @
-    $       = G.$
-    probes_and_matchers = [
-      [ """/foo/bar/!baz""", "$FM['global']['foo']['bar']['!baz'];\n" ]
-      ]
-    for [ probe, matcher, ] in probes_and_matchers
-      node    = G.route.run probe
-      result  = G.as.coffee node
-      result  = G.as.js node
-      # debug JSON.stringify result
-      test.eq result, matcher
 
-  #---------------------------------------------------------------------------------------------------------
-  'as.standard: standardize absolute route': ( test ) ->
-    G       = @
-    $       = G.$
-    probes_and_matchers = [
-      [ """/foo/bar/!baz""", {"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"Identifier","name":"$FM"},"property":{"type":"Literal","value":"global","raw":"'global'"}},"property":{"type":"Literal","value":"foo","raw":"'foo'"}},"property":{"type":"Literal","value":"bar","raw":"'bar'"}},"property":{"type":"Literal","value":"!baz","raw":"'!baz'"}}}]} ]
-      ]
-    for [ probe, matcher, ] in probes_and_matchers
-      node    = G.route.run probe
-      result  = G.as.standard node
-      # debug JSON.stringify result
-      test.eq result, matcher
+  # #---------------------------------------------------------------------------------------------------------
+  # 'as.js: render relative route as JavaScript': ( test ) ->
+  #   G       = @
+  #   $       = G.$
+  #   probes_and_matchers = [
+  #     [ """foo/bar/!baz""", "$FM['scope']['foo']['bar']['!baz'];\n" ]
+  #     ]
+  #   for [ probe, matcher, ] in probes_and_matchers
+  #     node    = G.route.run probe
+  #     result  = ( G.as.js node )[ 'target' ]
+  #     # debug JSON.stringify result
+  #     test.eq result, matcher
+
+  # #---------------------------------------------------------------------------------------------------------
+  # 'as.standard: standardize relative route': ( test ) ->
+  #   G       = @
+  #   $       = G.$
+  #   probes_and_matchers = [
+  #     [ """foo/bar/!baz""", {"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"Identifier","name":"$FM"},"property":{"type":"Literal","value":"scope","raw":"'scope'"}},"property":{"type":"Literal","value":"foo","raw":"'foo'"}},"property":{"type":"Literal","value":"bar","raw":"'bar'"}},"property":{"type":"Literal","value":"!baz","raw":"'!baz'"}}}]} ]
+  #     ]
+  #   for [ probe, matcher, ] in probes_and_matchers
+  #     node    = G.route.run probe
+  #     result  = G.as.standard node
+  #     # debug JSON.stringify result
+  #     test.eq result, matcher
+
+  # #---------------------------------------------------------------------------------------------------------
+  # 'as.js: render absolute route as JavaScript': ( test ) ->
+  #   G       = @
+  #   $       = G.$
+  #   probes_and_matchers = [
+  #     [ """/foo/bar/!baz""", "$FM['global']['foo']['bar']['!baz'];\n" ]
+  #     ]
+  #   for [ probe, matcher, ] in probes_and_matchers
+  #     node    = G.route.run probe
+  #     result  = ( G.as.js node )[ 'target' ]
+  #     # debug JSON.stringify result
+  #     test.eq result, matcher
+
+  # #---------------------------------------------------------------------------------------------------------
+  # 'as.standard: standardize absolute route': ( test ) ->
+  #   G       = @
+  #   $       = G.$
+  #   probes_and_matchers = [
+  #     [ """/foo/bar/!baz""", {"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"MemberExpression","computed":true,"object":{"type":"Identifier","name":"$FM"},"property":{"type":"Literal","value":"global","raw":"'global'"}},"property":{"type":"Literal","value":"foo","raw":"'foo'"}},"property":{"type":"Literal","value":"bar","raw":"'bar'"}},"property":{"type":"Literal","value":"!baz","raw":"'!baz'"}}}]} ]
+  #     ]
+  #   for [ probe, matcher, ] in probes_and_matchers
+  #     node    = G.route.run probe
+  #     result  = G.as.standard node
+  #     # debug JSON.stringify result
+  #     test.eq result, matcher
