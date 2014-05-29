@@ -48,7 +48,9 @@ NAME                      = require './6-name'
   R = R.describe 'assignment'
   return R
 
-
+#-----------------------------------------------------------------------------------------------------------
+@$new.assignment.as = ( G, $ ) ->
+  coffee: ( node ) ->
 
 #===========================================================================================================
 # NODES
@@ -97,11 +99,11 @@ NAME                      = require './6-name'
       else
         throw new Error "unknown node type #{rpr type}"
 
-  #-----------------------------------------------------------------------------------------------------------
-  RR.js = ( node ) ->
-    COFFEE        = require 'coffee-script'
-    source_coffee = G.as.coffee node
-    return COFFEE.compile source_coffee, bare: yes
+  # #-----------------------------------------------------------------------------------------------------------
+  # RR.js = ( node ) ->
+  #   COFFEE        = require 'coffee-script'
+  #   source_coffee = G.as.coffee node
+  #   return COFFEE.compile source_coffee, bare: yes
 
   #-----------------------------------------------------------------------------------------------------------
   ### TAINT `standard` is not a good name for this method ###
