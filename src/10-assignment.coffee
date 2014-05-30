@@ -16,7 +16,6 @@ help                      = TRM.get_logger 'help',      badge
 echo                      = TRM.echo.bind TRM
 #...........................................................................................................
 ƒ                         = require 'flowmatic'
-@$new                     = ƒ.new.new @
 BNP                       = require 'coffeenode-bitsnpieces'
 TEXT                      = require './2-text'
 CHR                       = require './3-chr'
@@ -24,112 +23,73 @@ NUMBER                    = require './4-number'
 # XRE                       = require './9-xre'
 NAME                      = require './6-name'
 
-#-----------------------------------------------------------------------------------------------------------
-@$ =
-  'mark':                 ':'
-  'needs-ilws-before':    no
-  'needs-ilws-after':     yes
 
 
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-@$new.expression = ( G, $ ) ->
-  ### TAINT placeholder method for a more complete version of what contitutes an expression ###
-  R = ƒ.or NUMBER.integer, TEXT.literal, NAME.route
+@new_grammar = ( G, $ ) ->
+  RR =
+    nodes: {}
+    tests: {}
+    #.......................................................................................................
+    options:
+      'mark':                 ':'
+      'needs-ilws-before':    no
+      'needs-ilws-after':     yes
 
-#-----------------------------------------------------------------------------------------------------------
-@$new.assignment = ( G, $ ) ->
-  if $[ 'needs-ilws-before' ]
-    R = ƒ.seq NAME.route, CHR.ilws, $[ 'mark' ], CHR.ilws, ( -> G.expression )
-  else
-    R = ƒ.seq NAME.route,           $[ 'mark' ], CHR.ilws, ( -> G.expression )
-  R = R.onMatch ( match ) -> G.new_node.assignment match...
-  R = R.describe 'assignment'
-  return R
 
-#-----------------------------------------------------------------------------------------------------------
-@$new.assignment.as = ( G, $ ) ->
-  return coffee: ( node ) ->
-
-#===========================================================================================================
-# NODES
-#-----------------------------------------------------------------------------------------------------------
-@$new.new_node = ( G, $ ) ->
-  RR = {}
+  #=========================================================================================================
+  # RULES
+  #---------------------------------------------------------------------------------------------------------
+  RR.expression = ->
+    ### TAINT placeholder method for a more complete version of what contitutes an expression ###
+    R = ƒ.or NUMBER.integer, TEXT.literal, NAME.route
 
   #---------------------------------------------------------------------------------------------------------
-  RR.assignment = ( lhs, mark, rhs ) ->
+  RR.assignment = ->
+    if $[ 'needs-ilws-before' ]
+      R = ƒ.seq NAME.route, CHR.ilws, $[ 'mark' ], CHR.ilws, ( -> G.expression )
+    else
+      R = ƒ.seq NAME.route,           $[ 'mark' ], CHR.ilws, ( -> G.expression )
+    R = R.onMatch ( match ) -> G.nodes.assignment match...
+    R = R.describe 'assignment'
+    return R
+
+  #.........................................................................................................
+  return RR
+
+  #=========================================================================================================
+  # NODES
+  #---------------------------------------------------------------------------------------------------------
+  RR.nodes.assignment = ( lhs, mark, rhs ) ->
       R                 = ƒ.new._XXX_node G, 'Literal', 'assignment'
       R[ 'lhs'        ] = lhs
-      R[ 'x-mark'     ] = mark
+      R[ 'mark'       ] = mark
       R[ 'rhs'        ] = rhs
       return R
 
+  #---------------------------------------------------------------------------------------------------------
+  RR.nodes.assignment.as =
+    coffee: ( node ) ->
+      { lhs, 'x-mark': mark, rhs } = node
+      lhs_result  = ƒ.as.coffee lhs
+      rhs_result  = ƒ.as.coffee rhs
+      # whisper lhs_result
+      # whisper rhs_result
+      target      = """#{lhs_result[ 'target' ]} = #{rhs_result[ 'target' ]}"""
+      taints      = ƒ.as._collect_taints lhs_result, rhs_result
+      whisper taints
+      return target: target, taints: taints
+
   #.........................................................................................................
   return RR
 
-#===========================================================================================================
-# TRANSLATORS
-#-----------------------------------------------------------------------------------------------------------
-@$new.as = ( G, $ ) ->
-  RR = {}
-
-  #-----------------------------------------------------------------------------------------------------------
-  RR.coffee = ( node ) ->
-    #.........................................................................................................
-    switch type = node[ 'type' ]
-      #.......................................................................................................
-      when 'Literal'
-        switch subtype = node[ 'x-subtype' ]
-          #.................................................................................................
-          when 'assignment'
-            { lhs, 'x-mark': mark, rhs } = node
-            lhs_result  = ƒ.as.coffee lhs
-            rhs_result  = ƒ.as.coffee rhs
-            # whisper lhs_result
-            # whisper rhs_result
-            target      = """#{lhs_result[ 'target' ]} = #{rhs_result[ 'target' ]}"""
-            taints      = ƒ.as._collect_taints lhs_result, rhs_result
-            whisper taints
-            return target: target, taints: taints
-          else
-            throw new Error "unknown node subtype #{rpr subtype}"
-      #.......................................................................................................
-      else
-        throw new Error "unknown node type #{rpr type}"
-
-  # #-----------------------------------------------------------------------------------------------------------
-  # RR.js = ( node ) ->
-  #   COFFEE        = require 'coffee-script'
-  #   source_coffee = G.as.coffee node
-  #   return COFFEE.compile source_coffee, bare: yes
-
-  #-----------------------------------------------------------------------------------------------------------
-  ### TAINT `standard` is not a good name for this method ###
-  RR.standard = ( node ) ->
-    ESPRIMA   = require 'esprima'
-    source_js = G.as.js node
-    return ESPRIMA.parse source_js
-  #.........................................................................................................
-  return RR
-
-
-#===========================================================================================================
-# APPLY NEW TO MODULE
-#-----------------------------------------------------------------------------------------------------------
-### Run `@$new` to make `@` (`this`) an instance of this grammar with default options: ###
-@$new @, null
-
-
-#===========================================================================================================
-@$TESTS =
-#-----------------------------------------------------------------------------------------------------------
 
   #=========================================================================================================
-  # NAMES
+  # TESTS
   #---------------------------------------------------------------------------------------------------------
-  '$assignment: accepts assignment with name': ( test ) ->
+  RR.tests[ '$assignment: accepts assignment with name' ] = ( test ) ->
     G       = @
     $       = G.$
     joiner  = $[ 'crumb/joiner' ]
@@ -144,7 +104,7 @@ NAME                      = require './6-name'
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
-  '$assignment: accepts assignment with route': ( test ) ->
+  RR.tests[ '$assignment: accepts assignment with route' ] = ( test ) ->
     G       = @
     $       = G.$
     joiner  = $[ 'crumb/joiner' ]
@@ -159,7 +119,7 @@ NAME                      = require './6-name'
       # test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
-  'as.coffee: render assignment as CoffeeScript': ( test ) ->
+  RR.tests[ 'as.coffee: render assignment as CoffeeScript' ] = ( test ) ->
     G       = @
     $       = G.$
     joiner  = $[ 'crumb/joiner' ]
@@ -175,4 +135,12 @@ NAME                      = require './6-name'
       # debug JSON.stringify result
       debug '\n' + result
     #   # test.eq result, matcher
+
+
+############################################################################################################
+ƒ._XXX_new_grammar @
+
+
+
+
 
