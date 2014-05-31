@@ -239,46 +239,7 @@ XRE                       = require './9-xre'
       #.......................................................................................................
       else
         throw new Error "unknown node type #{rpr type}"
-
-  # #-----------------------------------------------------------------------------------------------------------
-  # RR.js = ( node ) ->
-  #   COFFEE        = require 'coffee-script'
-  #   source_coffee = ( G.as.coffee node )[ 'target' ]
-  #   return COFFEE.compile source_coffee, bare: yes
-
-  # #-----------------------------------------------------------------------------------------------------------
-  # ### TAINT `standard` is not a good name for this method ###
-  # RR.standard = ( node ) ->
-  #   ESPRIMA   = require 'esprima'
-  #   source_js = G.as.js node
-  #   return ESPRIMA.parse source_js
-  #   # #.........................................................................................................
-  #   # switch type = node[ 'type' ]
-  #   #   #.......................................................................................................
-  #   #   when 'Literal'
-  #   #     switch subtype = node[ 'x-subtype' ]
-  #   #       #.................................................................................................
-  #   #       when 'relative-route'
-  #   #         crumbs  = node[ 'value' ]
-  #   #         R       = ƒ.new.identifier null, '$scope'
-  #   #         for crumb, idx in crumbs
-  #   #           crumb_type    = crumb[ 'type' ]
-  #   #           crumb_subtype = crumb[ 'x-subtype' ]
-  #   #           unless crumb_type is 'Identifier'
-  #   #             throw new Error "unknown crumb type #{rpr crumb_type}"
-  #   #           name      = crumb[ 'name' ]
-  #   #           property  = ƒ.new.literal null, ( rpr name ), name
-  #   #           R         = ƒ.new.member_expression null, true, R, property
-  #   #         return R
-  #   #       else
-  #   #         throw new Error "unknown node subtype #{rpr subtype}"
-  #   #   #.......................................................................................................
-  #   #   else
-  #   #     throw new Error "unknown node type #{rpr type}"
-
-  # #.........................................................................................................
-  # return RR
-
+  return RR
 
 #===========================================================================================================
 # APPLY NEW TO MODULE
@@ -462,36 +423,36 @@ XRE                       = require './9-xre'
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.route.run probe
-      # debug JSON.stringify result
+      debug JSON.stringify result
       test.eq result, matcher
 
-  #=========================================================================================================
-  # TRANSLATORS
-  #---------------------------------------------------------------------------------------------------------
-  'as.coffee: render relative route as CoffeeScript': ( test ) ->
-    G       = @
-    $       = G.$
-    probes_and_matchers = [
-      [ """foo/bar/!baz""", "$FM[ 'scope' ][ 'foo' ][ 'bar' ][ '!baz' ]" ]
-      ]
-    for [ probe, matcher, ] in probes_and_matchers
-      node    = G.route.run probe
-      result  = ( G.as.coffee node )[ 'target' ]
-      # debug JSON.stringify result
-      test.eq result, matcher
+  # #=========================================================================================================
+  # # TRANSLATORS
+  # #---------------------------------------------------------------------------------------------------------
+  # 'as.coffee: render relative route as CoffeeScript': ( test ) ->
+  #   G       = @
+  #   $       = G.$
+  #   probes_and_matchers = [
+  #     [ """foo/bar/!baz""", "$FM[ 'scope' ][ 'foo' ][ 'bar' ][ '!baz' ]" ]
+  #     ]
+  #   for [ probe, matcher, ] in probes_and_matchers
+  #     node    = G.route.run probe
+  #     result  = ( G.as.coffee node )[ 'target' ]
+  #     # debug JSON.stringify result
+  #     test.eq result, matcher
 
-  #---------------------------------------------------------------------------------------------------------
-  'as.coffee: render absolute route as CoffeeScript': ( test ) ->
-    G       = @
-    $       = G.$
-    probes_and_matchers = [
-      [ """/foo/bar/!baz""", "$FM[ 'global' ][ 'foo' ][ 'bar' ][ '!baz' ]" ]
-      ]
-    for [ probe, matcher, ] in probes_and_matchers
-      node    = G.route.run probe
-      result  = ( G.as.coffee node )[ 'target' ]
-      # debug JSON.stringify result
-      test.eq result, matcher
+  # #---------------------------------------------------------------------------------------------------------
+  # 'as.coffee: render absolute route as CoffeeScript': ( test ) ->
+  #   G       = @
+  #   $       = G.$
+  #   probes_and_matchers = [
+  #     [ """/foo/bar/!baz""", "$FM[ 'global' ][ 'foo' ][ 'bar' ][ '!baz' ]" ]
+  #     ]
+  #   for [ probe, matcher, ] in probes_and_matchers
+  #     node    = G.route.run probe
+  #     result  = ( G.as.coffee node )[ 'target' ]
+  #     # debug JSON.stringify result
+  #     test.eq result, matcher
 
 
   # #---------------------------------------------------------------------------------------------------------
