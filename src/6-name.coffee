@@ -380,6 +380,7 @@ XRE                       = require './9-xre'
     joiner  = $[ 'crumb/joiner' ]
     probes_and_matchers  = [
       [ "abc#{joiner}def", {"type":"Literal","x-subtype":"relative-route","raw":"abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "foo#{joiner}bar#{joiner}baz", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
       [ "foo#{joiner}bar", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
       [ "Super#{joiner}cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"relative-route","raw":"Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
       [ "#{joiner}abc#{joiner}def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
@@ -387,7 +388,7 @@ XRE                       = require './9-xre'
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.route.run probe
-      # debug result
+      debug result
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
