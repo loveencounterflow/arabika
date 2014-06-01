@@ -186,8 +186,8 @@ try_escodegen_1 = ->
   ESCODEGEN                 = require 'escodegen'
   ESPRIMA                   = require 'esprima'
   escodegen_options         = ( require 'flowmatic/options' )[ 'escodegen' ]
-  NAME                      = require './6-name'
-  node = NAME.route.run 'foo/bar/baz'
+  ROUTE                     = require './6-route'
+  node = ROUTE.route.run 'foo/bar/baz'
   debug ESCODEGEN.generate node, escodegen_options
   debug ESCODEGEN.generate node[ 'value' ][ 0 ], escodegen_options
 

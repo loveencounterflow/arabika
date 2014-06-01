@@ -29,7 +29,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
   TEXT:                   require './2-text'
   CHR:                    require './3-chr'
   NUMBER:                 require './4-number'
-  NAME:                   require './6-name'
+  ROUTE:                  require './6-route'
 
 
 #===========================================================================================================
@@ -45,13 +45,13 @@ BNP                       = require 'coffeenode-bitsnpieces'
   #---------------------------------------------------------------------------------------------------------
   G._TEMPORARY_expression = ->
     ### TAINT placeholder method for a more complete version of what contitutes an expression ###
-    return ƒ.or ( -> $.NUMBER.integer ), ( -> $.TEXT.literal ), ( -> $.NAME.route )
+    return ƒ.or ( -> $.NUMBER.integer ), ( -> $.TEXT.literal ), ( -> $.ROUTE.route )
 
   #---------------------------------------------------------------------------------------------------------
   G.assignment = ->
     lws_before = if $[ 'needs-lws-before' ] then ( -> $.CHR.ilws ) else ƒ.drop ''
     lws_after  = if $[ 'needs-lws-after'  ] then ( -> $.CHR.ilws ) else ƒ.drop ''
-    return ƒ.seq ( -> $.NAME.route ), lws_before, $[ 'mark' ], lws_after, ( -> G._TEMPORARY_expression )
+    return ƒ.seq ( -> $.ROUTE.route ), lws_before, $[ 'mark' ], lws_after, ( -> G._TEMPORARY_expression )
     .onMatch ( match, state ) -> G.nodes.assignment state, match...
     .describe 'assignment'
 
@@ -83,7 +83,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
   # TESTS
   #---------------------------------------------------------------------------------------------------------
   G.tests[ 'assignment: accepts assignment with name' ] = ( test ) ->
-    joiner  = $.NAME.$[ 'crumb/joiner' ]
+    joiner  = $.ROUTE.$[ 'crumb/joiner' ]
     mark    = $[ 'mark' ]
     probes_and_matchers  = [
       [ "abc#{mark} 42", {"type":"Literal","x-subtype":"assignment","mark":":","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]},"rhs":{"type":"Literal","x-subtype":"integer","raw":"42","value":42}}, ]
@@ -101,7 +101,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
 
   #---------------------------------------------------------------------------------------------------------
   G.tests[ 'assignment: accepts assignment with route' ] = ( test ) ->
-    joiner  = $.NAME.$[ 'crumb/joiner' ]
+    joiner  = $.ROUTE.$[ 'crumb/joiner' ]
     mark    = $[ 'mark' ]
     probes_and_matchers  = [
       [ "yet#{joiner}another#{joiner}route#{mark} 42", {"type":"Literal","x-subtype":"assignment","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"yet/another/route","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"yet"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"another"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"route"}]},"mark":":","rhs":{"type":"Literal","x-subtype":"integer","raw":"42","value":42}}, ]
@@ -116,7 +116,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
 
   #---------------------------------------------------------------------------------------------------------
   G.tests[ 'as.coffee: render assignment as CoffeeScript' ] = ( test ) ->
-    joiner  = $.NAME.$[ 'crumb/joiner' ]
+    joiner  = $.ROUTE.$[ 'crumb/joiner' ]
     mark    = $[ 'mark' ]
     # debug ( rpr joiner ), ( rpr mark )
     probes_and_matchers  = [

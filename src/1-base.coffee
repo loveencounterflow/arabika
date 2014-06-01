@@ -19,7 +19,7 @@ $new                      = ƒ.new
 TEXT                      = require './2-text'
 CHR                       = require './3-chr'
 NUMBER                    = require './4-number'
-NAME                      = require './6-name'
+ROUTE                     = require './6-route'
 XRE                       = require './9-xre'
 
 
@@ -32,7 +32,7 @@ XRE                       = require './9-xre'
 @$_use_keyword     = ƒ.or => ƒ.string @$[ 'use-keyword' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@use_argument     = ƒ.or ( => NAME.symbol ), ( => NUMBER.digits ), ( => TEXT.literal )
+@use_argument     = ƒ.or ( => ROUTE.symbol ), ( => NUMBER.digits ), ( => TEXT.literal )
 
 #-----------------------------------------------------------------------------------------------------------
 @use_statement    = ( ƒ.seq ( => @$_use_keyword ), ( => CHR.ilws ), ( => @use_argument ) )
@@ -50,7 +50,7 @@ XRE                       = require './9-xre'
   'use_argument: accepts symbols': ( test ) ->
     G = @
     $ = G.$
-    mark = NAME.$[ 'symbol/mark' ]
+    mark = ROUTE.$[ 'symbol/mark' ]
     probes_and_matchers = [
       [ "#{mark}x",      {"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":x","value":"x"}   ]
       [ "#{mark}foo",    {"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":foo","value":"foo"} ]
@@ -92,7 +92,7 @@ XRE                       = require './9-xre'
   'use_statement: accepts symbols, digits, strings': ( test ) ->
     G       = @
     $       = G.$
-    mark    = NAME.$[ 'symbol/mark' ]
+    mark    = ROUTE.$[ 'symbol/mark' ]
     keyword = G.$[ 'use-keyword' ]
     probes_and_matchers = [
       [ "use #{mark}x",       ƒ.new.x_use_statement keyword, "#{mark}x",   "x" ]
@@ -111,7 +111,7 @@ XRE                       = require './9-xre'
   # 'use_statement: compilation to JS': ( test ) ->
   #   G       = @
   #   $       = G.$
-  #   mark    = NAME.$[ 'symbol/mark' ]
+  #   mark    = ROUTE.$[ 'symbol/mark' ]
   #   keyword = G.$[ 'use-keyword' ]
   #   probes_and_matchers = [
   #     [ "use #{mark}x",      {"type":"Literal","x-subtype":"use-statement","raw":"use ':x'","value":"use ':x'"} ]
