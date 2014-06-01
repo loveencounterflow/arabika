@@ -118,9 +118,9 @@ BNP                       = require 'coffeenode-bitsnpieces'
   G.tests[ 'as.coffee: render assignment as CoffeeScript' ] = ( test ) ->
     joiner  = $.NAME.$[ 'crumb/joiner' ]
     mark    = $[ 'mark' ]
-    debug ( rpr joiner ), ( rpr mark )
+    # debug ( rpr joiner ), ( rpr mark )
     probes_and_matchers  = [
-      [ "yet#{joiner}another#{joiner}route#{mark} 42", "", ]
+      [ "yet#{joiner}another#{joiner}route#{mark} 42", "### unable to find translator for Literal/integer ###\n$FM[ 'scope' ][ 'yet' ][ 'another' ][ 'route' ] = 42", ]
       [ "#{joiner}chinese#{joiner}𠀁#{mark} 'some text'", "### unable to find translator for Literal/text ###\n$FM[ 'global' ][ 'chinese' ][ '𠀁' ] = 'some text'", ]
       ]
     #.......................................................................................................
