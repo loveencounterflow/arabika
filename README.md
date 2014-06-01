@@ -9,7 +9,7 @@
 	- [Languages, Dialects, Versions, and Packages](#languages-dialects-versions-and-packages)
 		- [The SemVer Scheme and the `use` Statement](#the-semver-scheme-and-the-use-statement)
 		- [Packaging](#packaging)
-			- [Why Arabika does not use Mozilla Parser API Nodes](#why-arabika-does-not-use-mozilla-parser-api-nodes)
+		- [Why Arabika does not use Mozilla Parser API Nodes](#why-arabika-does-not-use-mozilla-parser-api-nodes)
 
 > **Table of Contents**  *generated with [DocToc](http://doctoc.herokuapp.com/)*
 
@@ -206,14 +206,14 @@ Dependencies regarding dialects *not* listed under `package.json/dependencies`, 
 `package.json/flowmatic/needs` (or similar; TBD).
 
 
-#### Why Arabika does not use Mozilla Parser API Nodes
+### Why Arabika does not use Mozilla Parser API Nodes
 
 [Mozilla SpiderMonkey Parser API (MPA) nodes](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Parser_API).
 
 I first thought it would be a great idea to produce only MPA-compatible nodes as it would then be possible
 to use such great tools as
-[esprima](http://esprima.org)
-[estraverse](https://github.com/Constellation/estraverse)
+[esprima](http://esprima.org),
+[estraverse](https://github.com/Constellation/estraverse),
 [esquery](https://github.com/jrfeenst/esquery)
 and
 [escodegen](https://github.com/Constellation/escodegen) to transform nodes and produce source code. However,
@@ -273,10 +273,20 @@ This is the unremarkable output for the corresponding Arabika source:
       {}, {}, {}, {}, {}, {} ] }
 ```
 
-Notice that the structural difference becomes more pronounced as the chain becomes longer. A long-standing
-piece of Wisdom in Programming i learned from the Zen of Python: **Flat is Better than Nested, Simple is
-Better than Complex**; it is conceivably harder to mentally grasp deeply nested structures than flat ones
-(as a general rule).
+Notice that the structural difference becomes more pronounced as the chain becomes longer. There's an
+important piece of Wisdom in Programming i learned from the Zen of Python: **Flat is Better than Nested,
+Simple is Better than Complex**. Sadly, much software violates both tenets without necessity.
+
+It is conceivably harder to mentally grasp deeply nested structures than flat ones (as a general rule),
+and generally recursive code to handle nested structures is also harder to read, understand, and maintain.
+There certainly *is* a place for recursiveness, but where it can be avoided for the greater good, that should be
+strived for.
+
+Given this state of affairs, i reverted back from producing MPA-compatible nodes and opted for a custom AST
+format. It's not only the nested structures, there's also a bunch of concepts that is very
+JavaScript-specific, while Arabika-specific stuff would have to get bolted on, all the time working hard
+to build exactly the structural outlines as envisioned by the MPA folks to keep all the tools functional.
+
 
 
 
