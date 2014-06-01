@@ -52,7 +52,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
     lws_before = if $[ 'needs-lws-before' ] then $.CHR.ilws else ƒ.drop ''
     lws_after  = if $[ 'needs-lws-after'  ] then $.CHR.ilws else ƒ.drop ''
     return ƒ.seq $.NAME.route, lws_before, $[ 'mark' ], lws_after, ( -> G._TEMPORARY_expression )
-    .onMatch ( match ) -> G.nodes.assignment match...
+    .onMatch ( match, state ) -> G.nodes.assignment state, match...
     .describe 'assignment'
 
   #---------------------------------------------------------------------------------------------------------
@@ -72,13 +72,11 @@ BNP                       = require 'coffeenode-bitsnpieces'
   #=========================================================================================================
   # NODES
   #---------------------------------------------------------------------------------------------------------
-  G.nodes.assignment = ( lhs, mark, rhs ) ->
-    # R                 = ƒ.new._XXX_node G, 'Literal', 'assignment'
-    R                 = ƒ.new._XXX_YYY_node G.assignment.as, 'Literal', 'assignment'
-    R[ 'lhs'        ] = lhs
-    R[ 'mark'       ] = mark
-    R[ 'rhs'        ] = rhs
-    return R
+  G.nodes.assignment = ( state, lhs, mark, rhs ) ->
+    return ƒ.new._XXX_YYY_node G.assignment.as, state, 'assignment',
+      'lhs':    lhs
+      'mark':   mark
+      'rhs':    rhs
 
 
   #=========================================================================================================
