@@ -233,7 +233,7 @@ try_esquery = ->
 try_esquery_1 = ->
   ESPRIMA                   = require 'esprima'
   ESQUERY                   = require 'esquery'
-  source  = """foo[ 'bar' ][ 'baz' ]"""
+  source  = """foo[ 'bar' ][ 'baz' ][ 'gnu' ][ 'foo' ][ 'due' ]"""
   node    = ESPRIMA.parse source
   debug node
   nodes   = ESQUERY.query node, '[type="Identifier"]'
