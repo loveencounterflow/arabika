@@ -43,18 +43,17 @@ BNP                       = require 'coffeenode-bitsnpieces'
   #=========================================================================================================
   # RULES
   #---------------------------------------------------------------------------------------------------------
-  G.expression = ->
+  G._TEMPORARY_expression = ->
     ### TAINT placeholder method for a more complete version of what contitutes an expression ###
-    R = ƒ.or $.NUMBER.integer, $.TEXT.literal, $.NAME.route
+    return ƒ.or $.NUMBER.integer, $.TEXT.literal, $.NAME.route
 
   #---------------------------------------------------------------------------------------------------------
   G.assignment = ->
-    ilws_before = if $[ 'needs-lws-before' ] then $.CHR.ilws else ƒ.drop ''
-    ilws_after  = if $[ 'needs-lws-after'  ] then $.CHR.ilws else ƒ.drop ''
-    R = ƒ.seq $.NAME.route, ilws_before, $[ 'mark' ], ilws_after, ( -> G.expression )
-    R = R.onMatch ( match ) -> G.nodes.assignment match...
-    R = R.describe 'assignment'
-    return R
+    lws_before = if $[ 'needs-lws-before' ] then $.CHR.ilws else ƒ.drop ''
+    lws_after  = if $[ 'needs-lws-after'  ] then $.CHR.ilws else ƒ.drop ''
+    return ƒ.seq $.NAME.route, lws_before, $[ 'mark' ], lws_after, ( -> G._TEMPORARY_expression )
+    .onMatch ( match ) -> G.nodes.assignment match...
+    .describe 'assignment'
 
   #---------------------------------------------------------------------------------------------------------
   G.assignment.as =
@@ -133,8 +132,6 @@ BNP                       = require 'coffeenode-bitsnpieces'
       debug '\n' + result
     #   # test.eq result, matcher
 
-  # #---------------------------------------------------------------------------------------------------------
-  # return G
 
 
 ############################################################################################################
