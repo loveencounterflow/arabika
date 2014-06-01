@@ -49,13 +49,13 @@ XRE                       = require './9-xre'
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT escapes on each call; no memoizing ###
-@$_nosq = ( ƒ.repeat => ƒ.or @$_escaped, /// [^ #{BNP.escape_regex @$_constants[ 'single-quote' ]} ] /// )
-  .onMatch ( match ) -> ( submatch[ 0 ] for submatch in match ).join ''
+@$_nosq = ( ƒ.repeat => ƒ.or ( => @$_escaped ), /// [^ #{BNP.escape_regex @$_constants[ 'single-quote' ]} ] /// )
+  .onMatch ( match ) => ( submatch[ 0 ] for submatch in match ).join ''
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT escapes on each call; no memoizing ###
-@$_nodq = ( ƒ.repeat => ƒ.or @$_escaped, /// [^ #{BNP.escape_regex @$_constants[ 'double-quote' ]} ] /// )
-  .onMatch ( match ) -> ( submatch[ 0 ] for submatch in match ).join ''
+@$_nodq = ( ƒ.repeat => ƒ.or ( => @$_escaped ), /// [^ #{BNP.escape_regex @$_constants[ 'double-quote' ]} ] /// )
+  .onMatch ( match ) => ( submatch[ 0 ] for submatch in match ).join ''
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `ƒ.or` is an expedient here ###
@@ -78,17 +78,17 @@ XRE                       = require './9-xre'
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT String conversion method dubious; will fail outside of Unicode BMP ###
-@$_unicode_hex = ( ƒ.seq @$_unicode4_metachr, /[0-9a-fA-F]{4}/ )
+@$_unicode_hex = ( ƒ.seq ( => @$_unicode4_metachr ), /[0-9a-fA-F]{4}/ )
   .onMatch ( match ) => String.fromCharCode '0x' + match[ 1 ]
 
 #-----------------------------------------------------------------------------------------------------------
-@$_escaped = ( ƒ.seq @$_chr_escaper, ( ƒ.or @$_simple_escape, @$_unicode_hex, @_chr ) )
+@$_escaped = ( ƒ.seq ( => @$_chr_escaper ), ( ƒ.or ( => @$_simple_escape ), ( => @$_unicode_hex ), ( => CHR.$chr ) ) )
   .onMatch ( match ) => match[ 1 ]
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT maybe we should *not* un-escape anything; better for translation ###
-@literal          = ( ƒ.or @$_sq_literal, @$_dq_literal )
-  .onMatch ( match ) =>
+@literal = ( ƒ.or ( => @$_sq_literal ), ( => @$_dq_literal ) )
+@literal = @literal.onMatch ( match ) =>
     [ ignore, value, ignore, ] = match
     return $new.literal 'text', ( match.join '' ), value
 
@@ -108,49 +108,64 @@ XRE                       = require './9-xre'
 
   #---------------------------------------------------------------------------------------------------------
   '$simple_escape: accepts and translates meta-chracters': ( test ) ->
-    probes_and_results = [
+    probes_and_matchers = [
       [ 'b',                  '\b' ]
       [ 'f',                  '\f' ]
       [ 'n',                  '\n' ]
       [ 'r',                  '\r' ]
       [ 't',                  '\t' ] ]
-    for [ probe, result, ] in probes_and_results
+    for [ probe, result, ] in probes_and_matchers
       test.eq ( @$_simple_escape.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
   '$escaped: accepts escaped chracters': ( test ) ->
     escaper = @$_constants[ 'chr-escaper' ]
-    probes_and_results = [
-      [ '+u4e01',              '丁' ]
+    probes_and_matchers = [
+      [ "#{escaper}u4e01",     '丁' ]
       [ "#{escaper}b",         '\b' ]
       [ "#{escaper}f",         '\f' ]
       [ "#{escaper}n",         '\n' ]
       [ "#{escaper}r",         '\r' ]
       [ "#{escaper}t",         '\t' ] ]
-    for [ probe, result, ] in probes_and_results
+    for [ probe, result, ] in probes_and_matchers
       test.eq ( @$_escaped.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
   '$nosq: accepts runs of chracters except unescaped single quote': ( test ) ->
     escaper = @$_constants[ 'chr-escaper' ]
-    probes_and_results = [
+    probes_and_matchers = [
       [ '0',                  '0' ]
       [ 'qwertz',             'qwertz' ]
       # [ "qw+'ertz",          "qw'ertz" ]
       [ "#{escaper}t",        "\t" ]
       [ "qw#{escaper}nertz",  "qw\nertz" ]
       [ '中華人"民共和國"',    　'中華人"民共和國"' ] ]
-    for [ probe, result, ] in probes_and_results
+    for [ probe, result, ] in probes_and_matchers
       # debug @$_nosq.run probe
       test.eq ( @$_nosq.run probe ), result
 
   #---------------------------------------------------------------------------------------------------------
   '$nodq: accepts runs of chracters except unescaped double quote': ( test ) ->
-    probes_and_results = [
+    probes_and_matchers = [
       [ '0',                  '0' ]
       [ 'qwertz',             'qwertz' ]
       [ "中華人'民共和國'",     　"中華人'民共和國'" ] ]
-    for [ probe, result, ] in probes_and_results
+    for [ probe, result, ] in probes_and_matchers
       test.eq ( @$_nodq.run probe ), result
+
+  #---------------------------------------------------------------------------------------------------------
+  '$literal: accepts single and double quoted string literals': ( test ) ->
+    probes_and_matchers = [
+      [ '"0"',           {"type":"Literal","x-subtype":"text","raw":"\"0\"","value":"0"}, ]
+      [ '"qwertz"',      {"type":"Literal","x-subtype":"text","raw":"\"qwertz\"","value":"qwertz"}, ]
+      [ "'中華人民共和國'",     {"type":"Literal","x-subtype":"text","raw":"'中華人民共和國'","value":"中華人民共和國"}, ]
+      ]
+    for [ probe, matcher, ] in probes_and_matchers
+      result = @literal.run probe
+      # debug JSON.stringify result
+      test.eq result, matcher
+
+
+
 
 

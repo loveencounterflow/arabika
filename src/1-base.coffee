@@ -32,10 +32,10 @@ XRE                       = require './9-xre'
 @$_use_keyword     = ƒ.or => ƒ.string @$[ 'use-keyword' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@use_argument     = ƒ.or NAME.symbol, NUMBER.digits, TEXT.literal
+@use_argument     = ƒ.or ( => NAME.symbol ), ( => NUMBER.digits ), ( => TEXT.literal )
 
 #-----------------------------------------------------------------------------------------------------------
-@use_statement    = ( ƒ.seq @$_use_keyword, CHR.ilws, @use_argument )
+@use_statement    = ( ƒ.seq ( => @$_use_keyword ), ( => CHR.ilws ), ( => @use_argument ) )
   .onMatch ( match ) =>
     [ keyword, { raw, value } ] = match
     return ƒ.new.x_use_statement keyword, raw

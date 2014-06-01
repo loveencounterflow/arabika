@@ -6,7 +6,7 @@
 ############################################################################################################
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾3-chr﴿'
+badge                     = '﴾6-name﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge
@@ -380,7 +380,7 @@ XRE                       = require './9-xre'
     joiner  = $[ 'crumb/joiner' ]
     probes_and_matchers  = [
       [ "abc#{joiner}def", {"type":"Literal","x-subtype":"relative-route","raw":"abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
-      [ "foo#{joiner}bar#{joiner}baz#{joiner}gnu#{joiner}foo#{joiner}due", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
+      [ "foo#{joiner}bar#{joiner}baz#{joiner}gnu#{joiner}foo#{joiner}due", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar/baz/gnu/foo/due","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"baz"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"gnu"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"due"}]}, ]
       [ "foo#{joiner}bar", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
       [ "Super#{joiner}cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"relative-route","raw":"Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
       [ "#{joiner}abc#{joiner}def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
@@ -388,7 +388,7 @@ XRE                       = require './9-xre'
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.route.run probe
-      debug result
+      # debug JSON.stringify result
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
@@ -424,7 +424,7 @@ XRE                       = require './9-xre'
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.route.run probe
-      debug JSON.stringify result
+      # debug JSON.stringify result
       test.eq result, matcher
 
   # #=========================================================================================================

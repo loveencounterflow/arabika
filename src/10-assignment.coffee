@@ -45,13 +45,13 @@ BNP                       = require 'coffeenode-bitsnpieces'
   #---------------------------------------------------------------------------------------------------------
   G._TEMPORARY_expression = ->
     ### TAINT placeholder method for a more complete version of what contitutes an expression ###
-    return ƒ.or $.NUMBER.integer, $.TEXT.literal, $.NAME.route
+    return ƒ.or ( -> $.NUMBER.integer ), ( -> $.TEXT.literal ), ( -> $.NAME.route )
 
   #---------------------------------------------------------------------------------------------------------
   G.assignment = ->
-    lws_before = if $[ 'needs-lws-before' ] then $.CHR.ilws else ƒ.drop ''
-    lws_after  = if $[ 'needs-lws-after'  ] then $.CHR.ilws else ƒ.drop ''
-    return ƒ.seq $.NAME.route, lws_before, $[ 'mark' ], lws_after, ( -> G._TEMPORARY_expression )
+    lws_before = if $[ 'needs-lws-before' ] then ( -> $.CHR.ilws ) else ƒ.drop ''
+    lws_after  = if $[ 'needs-lws-after'  ] then ( -> $.CHR.ilws ) else ƒ.drop ''
+    return ƒ.seq ( -> $.NAME.route ), lws_before, $[ 'mark' ], lws_after, ( -> G._TEMPORARY_expression )
     .onMatch ( match, state ) -> G.nodes.assignment state, match...
     .describe 'assignment'
 
@@ -65,7 +65,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
       # whisper rhs_result
       target      = """#{lhs_result[ 'target' ]} = #{rhs_result[ 'target' ]}"""
       taints      = ƒ.as._collect_taints lhs_result, rhs_result
-      whisper taints
+      # whisper taints
       return target: target, taints: taints
 
 
@@ -91,6 +91,10 @@ BNP                       = require 'coffeenode-bitsnpieces'
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
+      # try
+      #   G.assignment.run probe
+      # catch error
+      #   debug error[ 'stack' ]
       result = ƒ.new._delete_grammar_references G.assignment.run probe
       # debug JSON.stringify result
       test.eq result, matcher
@@ -100,35 +104,34 @@ BNP                       = require 'coffeenode-bitsnpieces'
     joiner  = $.NAME.$[ 'crumb/joiner' ]
     mark    = $[ 'mark' ]
     probes_and_matchers  = [
-      [ "yet#{joiner}another#{joiner}route#{mark} 42", {"type":"Literal","x-subtype":"assignment","mark":":","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]},"rhs":{"type":"Literal","x-subtype":"integer","raw":"42","value":42}}, ]
-      [ "#{joiner}chinese#{joiner}𠀁#{mark} '42'", {"type":"Literal","x-subtype":"assignment","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"𠀁","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"𠀁"}]},"mark":":","rhs":{"type":"Literal","x-subtype":"text","raw":"'42'","value":"42"}}, ]
+      [ "yet#{joiner}another#{joiner}route#{mark} 42", {"type":"Literal","x-subtype":"assignment","lhs":{"type":"Literal","x-subtype":"relative-route","raw":"yet/another/route","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"yet"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"another"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"route"}]},"mark":":","rhs":{"type":"Literal","x-subtype":"integer","raw":"42","value":42}}, ]
+      [ "#{joiner}chinese#{joiner}𠀁#{mark} '42'", {"type":"Literal","x-subtype":"assignment","lhs":{"type":"Literal","x-subtype":"absolute-route","raw":"/chinese/𠀁","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"chinese"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"𠀁"}]},"mark":":","rhs":{"type":"Literal","x-subtype":"text","raw":"'42'","value":"42"}}, ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       # debug '©392', probe
       result = ƒ.new._delete_grammar_references G.assignment.run probe
       # debug JSON.stringify result#, null, '  '
-      # test.eq result, matcher
+      test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
   G.tests[ 'as.coffee: render assignment as CoffeeScript' ] = ( test ) ->
     joiner  = $.NAME.$[ 'crumb/joiner' ]
     mark    = $[ 'mark' ]
+    debug ( rpr joiner ), ( rpr mark )
     probes_and_matchers  = [
-      [ "yet#{joiner}another#{joiner}route#{mark} 42", null, ]
-      [ "#{joiner}chinese#{joiner}𠀁#{mark} 'some text'", null, ]
+      [ "yet#{joiner}another#{joiner}route#{mark} 42", "", ]
+      [ "#{joiner}chinese#{joiner}𠀁#{mark} 'some text'", "### unable to find translator for Literal/text ###\n$FM[ 'global' ][ 'chinese' ][ '𠀁' ] = 'some text'", ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       node        = G.assignment.run probe
-      # debug ( require 'coffeenode-types').type_of G.assignment
-      # debug ( require 'coffeenode-types').type_of G.assignment.as
-      # debug ( require 'coffeenode-types').type_of G.assignment.as.coffee
       translation = G.assignment.as.coffee node
       result      = ƒ.as.coffee.target translation
       # debug JSON.stringify result
-      debug '\n' + result
-    #   # test.eq result, matcher
+      # debug '\n' + result
+      test.eq result, matcher
+
 
 
 
