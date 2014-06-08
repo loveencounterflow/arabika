@@ -22,12 +22,11 @@ BNP                       = require 'coffeenode-bitsnpieces'
 XRE                       = require './9-xre'
 
 
-
 #===========================================================================================================
 # OPTIONS
 #-----------------------------------------------------------------------------------------------------------
 @options =
-  CHR:      require './3-chr'
+  # CHR:      require './3-chr'
 
   #---------------------------------------------------------------------------------------------------------
   ### Names: ###
@@ -36,6 +35,8 @@ XRE                       = require './9-xre'
   ### Leading and trailing characters in names (excluding sigils): ###
   'identifier/first-chr':     XRE '\\p{L}'
   'identifier/trailing-chrs': XRE '(?:-|\\p{L}|\\d)*'
+  # 'identifier/first-chr':     /[a-zA-Z國畫很美]|𠀁/
+  # 'identifier/trailing-chrs': /(?:-|[a-zA-Z國畫很美]|𠀁|\d)*/
 
   #---------------------------------------------------------------------------------------------------------
   ### Character used to form URL-like routes out of crumbs: ###
@@ -95,7 +96,8 @@ XRE                       = require './9-xre'
   #---------------------------------------------------------------------------------------------------------
   G.$sigil = ->
     sigils = ( XRE.$esc key for key of $[ 'sigils'] ).join ''
-    R = ƒ.regex XRE "[#{sigils}]"
+    # R = ƒ.regex XRE "[#{sigils}]"
+    R = ƒ.regex new RegExp "[#{sigils}]"
     R = R.onMatch ( match, state ) -> match[ 0 ]
     R = R.describe 'sigil'
     return R
@@ -148,7 +150,7 @@ XRE                       = require './9-xre'
     R = R.onMatch ( match, state ) ->
       [ slash, route, ]     = match
       route[ 'raw' ]        = $[ 'crumb/joiner' ] + route[ 'raw' ]
-      route[ 'x-subtype' ]  = 'absolute-route'
+      route[ 'type' ]       = 'absolute-route'
       return route
     R = R.describe 'absolute-route'
     return R
@@ -209,10 +211,9 @@ XRE                       = require './9-xre'
 
   #---------------------------------------------------------------------------------------------------------
   G.nodes.relative_route = ( state, raw, value ) ->
-      R                 = ƒ.new._XXX_YYY_node G.route.as, state, 'relative-route'
-      R[ 'raw'        ] = raw
-      R[ 'value'      ] = value
-      return R
+      return ƒ.new._XXX_YYY_node G.route.as, state, 'relative-route',
+        'raw':      raw
+        'value':    value
 
   #---------------------------------------------------------------------------------------------------------
   G.nodes.identifier_with_sigil = ( state, sigil, name ) ->
@@ -237,6 +238,7 @@ XRE                       = require './9-xre'
     probes = [ 'a', 'A', '𠀁',  ]
     for probe in probes
       result = G.$identifier_first_chr.run probe
+      # debug JSON.stringify result
       test.eq result, probe
 
   #---------------------------------------------------------------------------------------------------------
@@ -323,13 +325,13 @@ XRE                       = require './9-xre'
   G.tests[ 'route: accepts single name' ] = ( test ) ->
     ### TAINT test will fail for Unicode 32bit code points ###
     probes_and_matchers  = [
-      [ "abc",      {"type":"Literal","x-subtype":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]} ]
-      [ "!國畫很美",     {"type":"Literal","x-subtype":"relative-route","raw":"!國畫很美","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"!國畫很美"}]} ]
+      [ "abc",      {"type":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]} ]
+      [ "!國畫很美",     {"type":"relative-route","raw":"!國畫很美","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"!國畫很美"}]} ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.route.run probe
-      # debug JSON.stringify G.route.run probe
+      # debug JSON.stringify result
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
@@ -337,11 +339,11 @@ XRE                       = require './9-xre'
     ### TAINT test will fail for Unicode 32bit code points ###
     joiner  = $[ 'crumb/joiner' ]
     probes_and_matchers  = [
-      [ "abc#{joiner}def", {"type":"Literal","x-subtype":"relative-route","raw":"abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
-      [ "foo#{joiner}bar#{joiner}baz#{joiner}gnu#{joiner}foo#{joiner}due", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar/baz/gnu/foo/due","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"baz"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"gnu"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"due"}]}, ]
-      [ "foo#{joiner}bar", {"type":"Literal","x-subtype":"relative-route","raw":"foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
-      [ "Super#{joiner}cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"relative-route","raw":"Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
-      [ "#{joiner}abc#{joiner}def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "abc#{joiner}def", {"type":"relative-route","raw":"abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "foo#{joiner}bar#{joiner}baz#{joiner}gnu#{joiner}foo#{joiner}due", {"type":"relative-route","raw":"foo/bar/baz/gnu/foo/due","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"baz"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"gnu"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"due"}]}, ]
+      [ "foo#{joiner}bar", {"type":"relative-route","raw":"foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
+      [ "Super#{joiner}cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"relative-route","raw":"Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
+      [ "#{joiner}abc#{joiner}def", {"type":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
@@ -354,15 +356,15 @@ XRE                       = require './9-xre'
     ### TAINT test will fail for Unicode 32bit code points ###
     joiner  = $[ 'crumb/joiner' ]
     probes_and_matchers  = [
-      [ "#{joiner}abc#{joiner}def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
-      [ "#{joiner}foo#{joiner}bar", {"type":"Literal","x-subtype":"absolute-route","raw":"/foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
-      [ "#{joiner}Super#{joiner}cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"absolute-route","raw":"/Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
-      [ "#{joiner}abc#{joiner}def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "#{joiner}abc#{joiner}def", {"type":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "#{joiner}foo#{joiner}bar", {"type":"absolute-route","raw":"/foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
+      [ "#{joiner}Super#{joiner}cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"absolute-route","raw":"/Super/cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
+      [ "#{joiner}abc#{joiner}def", {"type":"absolute-route","raw":"/abc/def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.route.run probe
-      # debug JSON.stringify G.route.run probe
+      # debug JSON.stringify result
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
@@ -370,16 +372,17 @@ XRE                       = require './9-xre'
     ### TAINT test will fail for Unicode 32bit code points ###
     joiner  = $[ 'crumb/joiner' ]
     probes_and_matchers  = [
-      [ "!abc#{joiner}def", {"type":"Literal","x-subtype":"relative-route","raw":"!abc/def","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"!abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
-      [ "foo#{joiner}%bar", {"type":"Literal","x-subtype":"relative-route","raw":"foo/%bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"%","name":"%bar"}]}, ]
-      [ "Super#{joiner}_cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"Literal","x-subtype":"relative-route","raw":"Super/_cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"_","name":"_cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
-      [ "#{joiner}abc#{joiner}~def", {"type":"Literal","x-subtype":"absolute-route","raw":"/abc/~def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"~","name":"~def"}]}, ]
+      [ "!abc#{joiner}def", {"type":"relative-route","raw":"!abc/def","value":[{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"!","name":"!abc"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"def"}]}, ]
+      [ "foo#{joiner}%bar", {"type":"relative-route","raw":"foo/%bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"%","name":"%bar"}]}, ]
+      [ "Super#{joiner}_cali#{joiner}fragilistic#{joiner}expialidocious", {"type":"relative-route","raw":"Super/_cali/fragilistic/expialidocious","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"Super"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"_","name":"_cali"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"fragilistic"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"expialidocious"}]}, ]
+      [ "#{joiner}abc#{joiner}~def", {"type":"absolute-route","raw":"/abc/~def","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"},{"type":"Identifier","x-subtype":"identifier-with-sigil","x-sigil":"~","name":"~def"}]}, ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.route.run probe
       # debug JSON.stringify result
       test.eq result, matcher
+
 
   # #---------------------------------------------------------------------------------------------------------
   # # TRANSLATORS
