@@ -300,7 +300,7 @@ XRE                       = require './9-xre'
   '$chunk: parses nested bracketed expression (2)': ( test ) ->
     G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
     source  = '<abc=def<ghi<jkl=mno>>pqr>'
-    # debug G.$chunk.run source
+    debug G.$chunk.run source
     test.eq ( G.$chunk.run source ), [ 'abc=def', [ 'ghi', [ 'jkl=mno', ] ], 'pqr', ]
 
   #---------------------------------------------------------------------------------------------------------

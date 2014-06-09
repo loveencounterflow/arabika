@@ -55,7 +55,11 @@ BNP                       = require 'coffeenode-bitsnpieces'
 
   #---------------------------------------------------------------------------------------------------------
   G.loop_statement = ->
-    return ƒ.seq $[ 'loop-keyword' ], $.INDENTATION.$stage
+    # return ƒ.seq ( -> $[ 'loop-keyword' ] ), ( -> $.INDENTATION.$stage )
+    return ƒ.seq ( -> $[ 'loop-keyword' ] ),
+      -> $.INDENTATION.$[ 'opener' ]
+      -> G.lines
+      -> $.INDENTATION.$[ 'closer' ]
     .onMatch ( match, state ) -> whisper match; match #G.nodes.loop state, match
     .describe 'loop'
 
@@ -121,7 +125,9 @@ BNP                       = require 'coffeenode-bitsnpieces'
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
-      result = ƒ.new._delete_grammar_references G.loop_statement.run probe
+      probe   = $.INDENTATION.$_as_bracketed probe
+      whisper probe
+      result  = ƒ.new._delete_grammar_references G.loop_statement.run probe
       debug JSON.stringify result
       # test.eq result, matcher
 
