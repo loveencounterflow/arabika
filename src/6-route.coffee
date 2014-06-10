@@ -165,8 +165,9 @@ XRE                       = require './9-xre'
   G.route.as =
     coffee: ( node ) ->
       # debug ( name for name of node)
-      subtype   = node[ 'x-subtype' ]
-      root_name = if subtype is 'relative-route' then 'scope' else 'global'
+      type      = node[ 'type' ]
+      # whisper ( name for name of node), node[ 'type']
+      root_name = if type is 'relative-route' then 'scope' else 'global'
       crumbs    = node[ 'value' ]
       names     = []
       for crumb, idx in crumbs

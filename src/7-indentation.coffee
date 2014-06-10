@@ -44,6 +44,8 @@ XRE                       = require './9-xre'
 
 #-----------------------------------------------------------------------------------------------------------
 @$ =
+  LINE:                 require './12-line'
+
   ### When `true`, suites are single strings that represent lines separated by `connector`; when `false`,
   suites are lists with lines as elements: ###
   # 'join-suites':        yes
@@ -238,6 +240,24 @@ XRE                       = require './9-xre'
   #.........................................................................................................
   return R
 
+#-----------------------------------------------------------------------------------------------------------
+@$new.$indent = ( G, $ ) ->
+  R = ƒ.or -> $[ 'opener' ]
+  return R
+
+# #-----------------------------------------------------------------------------------------------------------
+# @$new.$line = ( G, $ ) ->
+#   metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
+#   R         = ƒ.regex /// [^ #{metachrs} ]+ ///
+#   R         = R.onMatch ( match, state ) -> match[ 0 ]
+#   return R
+
+#-----------------------------------------------------------------------------------------------------------
+@$new.$step = ( G, $ ) ->
+  # R = ƒ.seq ( -> G.$line ), ( -> ƒ.check G.$indent )
+  R = ƒ.seq ( -> $.LINE.line ), ( -> ƒ.check G.$indent )
+  R = R.onMatch ( match, state ) -> match[ 0 ]
+  return R
 
 #===========================================================================================================
 # PARSING INDENTED SOURCE
@@ -300,8 +320,30 @@ XRE                       = require './9-xre'
   '$chunk: parses nested bracketed expression (2)': ( test ) ->
     G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
     source  = '<abc=def<ghi<jkl=mno>>pqr>'
-    debug G.$chunk.run source
+    # debug G.$chunk.run source
     test.eq ( G.$chunk.run source ), [ 'abc=def', [ 'ghi', [ 'jkl=mno', ] ], 'pqr', ]
+
+  #---------------------------------------------------------------------------------------------------------
+  '$indent: parses opener': ( test ) ->
+    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+    source  = '<'
+    # debug G.$indent.run source
+    test.eq ( G.$indent.run source ), '<'
+
+  # #---------------------------------------------------------------------------------------------------------
+  # '$line: parses line without metachrs': ( test ) ->
+  #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+  #   source  = 'ghijklmnop'
+  #   # debug G.$chunk.run source
+  #   test.eq ( G.$line.run source ), 'ghijklmnop'
+
+  #---------------------------------------------------------------------------------------------------------
+  '$step: parses line plus indent': ( test ) ->
+    G       = @
+    # G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+    source  = """loop【"""
+    # debug source
+    test.eq ( ( ƒ.seq G.$step, G.$indent ).run source ), [ 'loop', '【', ]
 
   #---------------------------------------------------------------------------------------------------------
   '$module: parses indented source (1)': ( test ) ->

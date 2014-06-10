@@ -115,23 +115,23 @@ BNP                       = require 'coffeenode-bitsnpieces'
       # debug JSON.stringify result
       test.eq result, matcher
 
-  # #---------------------------------------------------------------------------------------------------------
-  # G.tests[ 'as.coffee: render assignment as CoffeeScript' ] = ( test ) ->
-  #   joiner  = $.ROUTE.$[ 'crumb/joiner' ]
-  #   mark    = $[ 'mark' ]
-  #   # debug ( rpr joiner ), ( rpr mark )
-  #   probes_and_matchers  = [
-  #     [ "yet#{joiner}another#{joiner}route#{mark} 42", "### unable to find translator for Literal/integer ###\n$FM[ 'scope' ][ 'yet' ][ 'another' ][ 'route' ] = 42", ]
-  #     [ "#{joiner}chinese#{joiner}𠀁#{mark} 'some text'", "### unable to find translator for Literal/text ###\n$FM[ 'global' ][ 'chinese' ][ '𠀁' ] = 'some text'", ]
-  #     ]
-  #   #.......................................................................................................
-  #   for [ probe, matcher, ] in probes_and_matchers
-  #     node        = G.assignment.run probe
-  #     translation = G.assignment.as.coffee node
-  #     result      = ƒ.as.coffee.target translation
-  #     debug JSON.stringify result
-  #     # debug '\n' + result
-  #     test.eq result, matcher
+  #---------------------------------------------------------------------------------------------------------
+  G.tests[ 'as.coffee: render assignment as CoffeeScript' ] = ( test ) ->
+    joiner  = $.ROUTE.$[ 'crumb/joiner' ]
+    mark    = $[ 'mark' ]
+    # debug ( rpr joiner ), ( rpr mark )
+    probes_and_matchers  = [
+      [ "yet#{joiner}another#{joiner}route#{mark} 42", "### unable to find translator for Literal/integer ###\n$FM[ 'scope' ][ 'yet' ][ 'another' ][ 'route' ] = 42", ]
+      [ "#{joiner}chinese#{joiner}𠀁#{mark} 'some text'", "### unable to find translator for Literal/text ###\n$FM[ 'global' ][ 'chinese' ][ '𠀁' ] = 'some text'", ]
+      ]
+    #.......................................................................................................
+    for [ probe, matcher, ] in probes_and_matchers
+      node        = G.assignment.run probe
+      translation = G.assignment.as.coffee node
+      result      = ƒ.as.coffee.target translation
+      # debug JSON.stringify result
+      # debug '\n' + result
+      test.eq result, matcher
 
 
 

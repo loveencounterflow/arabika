@@ -5,7 +5,7 @@
 ############################################################################################################
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾10-assignment﴿'
+badge                     = '﴾12-line﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge
@@ -23,13 +23,13 @@ BNP                       = require 'coffeenode-bitsnpieces'
 # OPTIONS
 #-----------------------------------------------------------------------------------------------------------
 @options =
-  'loop-keyword':         'loop'
-  'break-keyword':        'break'
-  # TEXT:                   require './2-text'
-  # CHR:                    require './3-chr'
-  # NUMBER:                 require './4-number'
-  # ROUTE:                  require './6-route'
-  INDENTATION:            require './7-indentation'
+  'line-parsers': [
+    ( require './11-loop' ).break_statement
+    ( require './11-loop' ).loop_keyword
+    ( require './10-assignment' ).assignment
+    ( require './6-route' ).route
+    ]
+  # INDENTATION:            require './7-indentation'
 
 
 #===========================================================================================================
@@ -43,25 +43,22 @@ BNP                       = require 'coffeenode-bitsnpieces'
   #=========================================================================================================
   # RULES
   #---------------------------------------------------------------------------------------------------------
-  G.break = ->
-    return ƒ.or -> $[ 'break-keyword' ]
-    .onMatch ( match, state ) -> G.nodes.break state
-    .describe 'break'
+  G.line = ->
+    return ƒ.or -> ƒ.or $[ 'line-parsers' ]...
+    # .onMatch ( match, state ) -> match
+    .describe 'line'
 
-  #---------------------------------------------------------------------------------------------------------
-  G.loop_keyword = ->
-    return ƒ.or -> $[ 'loop-keyword' ]
-    .onMatch ( match, state ) -> G.nodes.loop state
+  # #---------------------------------------------------------------------------------------------------------
+  # G.loop_keyword = ->
+  #   return ƒ.or -> $[ 'loop-keyword' ]
+  #   .onMatch ( match, state ) -> G.nodes.loop state
 
-  #---------------------------------------------------------------------------------------------------------
-  G.loop_statement = ->
-    # return ƒ.seq ( -> $[ 'loop-keyword' ] ), ( -> $.INDENTATION.$stage )
-    return ƒ.seq ( -> $[ 'loop-keyword' ] ),
-      -> $.INDENTATION.$[ 'opener' ]
-      -> G.lines
-      -> $.INDENTATION.$[ 'closer' ]
-    .onMatch ( match, state ) -> whisper match; match #G.nodes.loop state, match
-    .describe 'loop'
+  # #---------------------------------------------------------------------------------------------------------
+  # G.loop_statement = ->
+  #   # return ƒ.seq ( -> $[ 'loop-keyword' ] ), ( -> $.INDENTATION.$stage )
+  #   return ƒ.seq ( -> $.INDENTATION.$step ), ( $.INDENTATION.$chunk )
+  #   .onMatch ( match, state ) -> G.nodes.loop state, match[ 0 ], match[ 1 ]
+  #   .describe 'loop'
 
   # #---------------------------------------------------------------------------------------------------------
   # G.loop = ->
@@ -88,67 +85,24 @@ BNP                       = require 'coffeenode-bitsnpieces'
   #=========================================================================================================
   # NODES
   #---------------------------------------------------------------------------------------------------------
-  G.nodes.break = ( state ) ->
-    return ƒ.new._XXX_YYY_node G.break.as, state, 'break',
-      'keyword':   $[ 'break-keyword' ]
-
-  #---------------------------------------------------------------------------------------------------------
-  G.nodes.loop = ( state ) ->
-    return ƒ.new._XXX_YYY_node G.loop.as, state, 'loop',
-      'keyword':   $[ 'loop-keyword' ]
+  # G.nodes.break = ( state, match ) ->
+  #   return ƒ.new._XXX_YYY_node G.break.as, state, 'break',
+  #     'keyword':   $[ 'break-keyword' ]
 
 
   #=========================================================================================================
   # TESTS
   #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'break: break keyword' ] = ( test ) ->
-    keyword = $[ 'break-keyword' ]
-    probes_and_matchers  = [
-      [ "#{keyword}", {"type":"break","keyword":"break"}, ]
-      ]
-    #.......................................................................................................
-    for [ probe, matcher, ] in probes_and_matchers
-      result = ƒ.new._delete_grammar_references G.break.run probe
-      # debug JSON.stringify result
-      test.eq result, matcher
-
-  #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'loop: keyword and stage' ] = ( test ) ->
-    keyword = $[ 'loop-keyword' ]
-    probes_and_matchers  = [
-      [ """
-        #{keyword}
-          foo
-          bar
-          baz
-        """, {}, ]
-      ]
-    #.......................................................................................................
-    for [ probe, matcher, ] in probes_and_matchers
-      probe   = $.INDENTATION.$_as_bracketed probe
-      whisper probe
-      result  = ƒ.new._delete_grammar_references G.loop_statement.run probe
-      debug JSON.stringify result
-      # test.eq result, matcher
-
-  #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'loop: refuses to parse dedent' ] = ( test ) ->
-    keyword = $[ 'loop-keyword' ]
-    probes_and_matchers  = [
-      [ """
-        #{keyword}
-          foo
-          bar
-          baz
-        bling
-        """, {}, ]
-      ]
-    #.......................................................................................................
-    for [ probe, matcher, ] in probes_and_matchers
-      result = ƒ.new._delete_grammar_references G.loop_statement.run probe
-      debug JSON.stringify result
-      # test.throws result, /xxxxxx/
-
+  # G.tests[ 'break: break keyword' ] = ( test ) ->
+  #   keyword = $[ 'break-keyword' ]
+  #   probes_and_matchers  = [
+  #     [ "#{keyword}", {"type":"break","keyword":"break"}, ]
+  #     ]
+  #   #.......................................................................................................
+  #   for [ probe, matcher, ] in probes_and_matchers
+  #     result = ƒ.new._delete_grammar_references G.break.run probe
+  #     # debug JSON.stringify result
+  #     test.eq result, matcher
 
 
 
