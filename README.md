@@ -275,12 +275,10 @@ This is the unremarkable output for the corresponding Arabika source:
 
 Notice that the structural difference becomes more pronounced as the chain becomes longer. There's an
 important piece of Wisdom in Programming i learned from the Zen of Python: **Flat is Better than Nested,
-Simple is Better than Complex**. Sadly, much software violates both tenets without necessity.
-
-It is conceivably harder to mentally grasp deeply nested structures than flat ones (as a general rule),
-and generally recursive code to handle nested structures is also harder to read, understand, and maintain.
-There certainly *is* a place for recursiveness, but where it can be avoided for the greater good, that should be
-strived for.
+Simple is Better than Complex**. As a rule of thumb, it is appreciably harder to mentally grasp deeply
+nested structures than flat ones, and, generally, recursive code to handle nested structures is harder to
+read, understand, and maintain. There certainly *is* a place for recursiveness, but where it can be avoided
+for the greater good, that should be strived for.
 
 Given this state of affairs, i reverted back from producing MPA-compatible nodes and opted for a custom AST
 format. It's not only the nested structures, there's also a bunch of concepts that is very

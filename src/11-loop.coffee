@@ -55,15 +55,17 @@ BNP                       = require 'coffeenode-bitsnpieces'
 
   #---------------------------------------------------------------------------------------------------------
   G.loop_statement = ->
-    # return ƒ.seq ( -> $[ 'loop-keyword' ] ), ( -> $.INDENTATION.$stage )
-    return ƒ.seq ( -> $.INDENTATION.$step ), ( -> $.INDENTATION.$chunk )
+    # return ƒ.seq ( -> $.INDENTATION.$step ), ( -> $.INDENTATION.$chunk )
+    return ƒ.seq ( -> $[ 'loop-keyword' ] ), ( -> ƒ.check $.INDENTATION.$indent ), ( -> $.INDENTATION.$chunk )
     .onMatch ( match, state ) ->
       loop_keyword        = $[ 'loop-keyword' ]
-      [ keyword, chunk, ] = match
+      [ keyword
+        opener
+        chunk ] = match
       throw new Error "expected #{rpr loop_keyword}, got #{rpr keyword}" unless keyword is loop_keyword
       ### TAINT not correct, chunk may contain other suites ###
-      ### TAINT shouldn't parse here, but in rule, above ###
-      chunk               = ( $.LINE.line.run line for line in chunk )
+      ### TAINT shouldn't parse here, but in INDENTATION.$chunk ###
+      # chunk               = ( $.LINE.line.run line for line in chunk )
       # whisper ƒ.new._delete_grammar_references chunk
       return G.nodes.loop_statement state, keyword, chunk
     .describe 'loop-statement'
@@ -167,7 +169,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
       test.throws ( -> G.loop_statement.run probe ), /Expected loop/
 
   #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'as.coffee: render break statement' ] = ( test ) ->
+  G.tests[ 'break_statement.as.coffee: render break statement' ] = ( test ) ->
     probes_and_matchers  = [
       [ "break", "break", ]
       # [ "#{joiner}chinese#{joiner}𠀁#{mark} 'some text'", "### unable to find translator for Literal/text ###\n$FM[ 'global' ][ 'chinese' ][ '𠀁' ] = 'some text'", ]
@@ -182,7 +184,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'as.coffee: render loop statement' ] = ( test ) ->
+  G.tests[ 'loop_statement.as.coffee: render loop statement' ] = ( test ) ->
     loop_keyword  = $[ 'loop-keyword' ]
     break_keyword = $[ 'break-keyword' ]
     probes_and_matchers  = [

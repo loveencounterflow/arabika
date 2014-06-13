@@ -208,8 +208,12 @@ XRE                       = require './9-xre'
 @$new.$suite = ( G, $ ) ->
   # metachrs  = XRE.$esc $[ 'opener' ] + $[ 'connector' ] + $[ 'closer' ]
   metachrs  = XRE.$esc $[ 'opener' ] + $[ 'closer' ]
-  R         = ƒ.repeatSeparated /// [^ #{metachrs} ]+ ///, $[ 'connector' ]
-  R         = R.onMatch ( match ) -> match.join $[ 'connector' ]
+  # R         = ƒ.repeatSeparated /// [^ #{metachrs} ]+ ///, $[ 'connector' ]
+  # R         = ƒ.repeatSeparated ( -> $.LINE.line ), ( -> $[ 'connector' ] )
+  R         = ƒ.repeatSeparated ( -> $.LINE.line ), $[ 'connector' ]
+  # R         = R.onMatch ( match ) ->
+  #   chunk               = ( $.LINE.line.run line for line in chunk )
+  #   match.join $[ 'connector' ]
   return R
 
 #-----------------------------------------------------------------------------------------------------------
