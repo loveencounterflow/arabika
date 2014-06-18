@@ -289,93 +289,94 @@ XRE                       = require './9-xre'
   '$suite: parses phrases joined by connector (1)': ( test ) ->
     G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
     source  = 'abc=def=ghi'
-    # debug G.$suite.run source
-    test.eq ( G.$suite.run source ), 'abc=def=ghi'
-
-  #---------------------------------------------------------------------------------------------------------
-  '$suite: parses phrases joined by connector (2)': ( test ) ->
-    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
-    source  = 'abc=def=ghi'
-    # debug G.$suite.run source
-    test.eq ( G.$suite.run source ), 'abc=def=ghi'
-
-  #---------------------------------------------------------------------------------------------------------
-  '$chunk: parses simple bracketed expression (1)': ( test ) ->
-    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
-    source  = '<abc=def=ghi>'
-    # debug G.$chunk.run source
-    test.eq ( G.$chunk.run source ), [ 'abc', 'def', 'ghi', ]
-
-  #---------------------------------------------------------------------------------------------------------
-  '$chunk: parses simple bracketed expression (2)': ( test ) ->
-    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
-    source  = '<abc=def=ghi>'
-    # debug G.$chunk.run source
-    test.eq ( G.$chunk.run source ), [ 'abc=def=ghi', ]
-
-  #---------------------------------------------------------------------------------------------------------
-  '$chunk: parses nested bracketed expression (1)': ( test ) ->
-    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
-    source  = '<abc=def<ghi<jkl=mno>>pqr>'
-    # debug G.$chunk.run source
-    test.eq ( G.$chunk.run source ), [ 'abc', 'def', [ 'ghi', [ 'jkl', 'mno', ] ], 'pqr', ]
-
-  #---------------------------------------------------------------------------------------------------------
-  '$chunk: parses nested bracketed expression (2)': ( test ) ->
-    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
-    source  = '<abc=def<ghi<jkl=mno>>pqr>'
-    # debug G.$chunk.run source
-    test.eq ( G.$chunk.run source ), [ 'abc=def', [ 'ghi', [ 'jkl=mno', ] ], 'pqr', ]
-
-  #---------------------------------------------------------------------------------------------------------
-  '$indent: parses opener': ( test ) ->
-    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
-    source  = '<'
-    # debug G.$indent.run source
-    test.eq ( G.$indent.run source ), '<'
+    result  = ƒ.new._delete_grammar_references G.$suite.run source
+    debug result
+    # test.eq ( G.$suite.run source ), 'abc=def=ghi'
 
   # #---------------------------------------------------------------------------------------------------------
-  # '$line: parses line without metachrs': ( test ) ->
+  # '$suite: parses phrases joined by connector (2)': ( test ) ->
   #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
-  #   source  = 'ghijklmnop'
+  #   source  = 'abc=def=ghi'
+  #   # debug G.$suite.run source
+  #   test.eq ( G.$suite.run source ), 'abc=def=ghi'
+
+  # #---------------------------------------------------------------------------------------------------------
+  # '$chunk: parses simple bracketed expression (1)': ( test ) ->
+  #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
+  #   source  = '<abc=def=ghi>'
   #   # debug G.$chunk.run source
-  #   test.eq ( G.$line.run source ), 'ghijklmnop'
+  #   test.eq ( G.$chunk.run source ), [ 'abc', 'def', 'ghi', ]
 
-  #---------------------------------------------------------------------------------------------------------
-  '$step: parses line plus indent': ( test ) ->
-    G       = @
-    # G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
-    source  = """loop【"""
-    # debug source
-    test.eq ( ( ƒ.seq G.$step, G.$indent ).run source ), [ 'loop', '【', ]
+  # #---------------------------------------------------------------------------------------------------------
+  # '$chunk: parses simple bracketed expression (2)': ( test ) ->
+  #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+  #   source  = '<abc=def=ghi>'
+  #   # debug G.$chunk.run source
+  #   test.eq ( G.$chunk.run source ), [ 'abc=def=ghi', ]
 
-  #---------------------------------------------------------------------------------------------------------
-  '$module: parses indented source (1)': ( test ) ->
-    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
-    source  = """
-    abc
-    def
-      ghi
-        jkl
-        mno
-    pqr
-    """
-    # debug G.$module.run source
-    test.eq ( G.$module.run source ), [ 'abc', 'def', [ 'ghi', [ 'jkl', 'mno', ] ], 'pqr', ]
+  # #---------------------------------------------------------------------------------------------------------
+  # '$chunk: parses nested bracketed expression (1)': ( test ) ->
+  #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
+  #   source  = '<abc=def<ghi<jkl=mno>>pqr>'
+  #   # debug G.$chunk.run source
+  #   test.eq ( G.$chunk.run source ), [ 'abc', 'def', [ 'ghi', [ 'jkl', 'mno', ] ], 'pqr', ]
 
-  #---------------------------------------------------------------------------------------------------------
-  '$module: parses indented source (2)': ( test ) ->
-    G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
-    source  = """
-    abc
-    def
-      ghi
-        jkl
-        mno
-    pqr
-    """
-    # debug G.$module.run source
-    test.eq ( G.$module.run source ), [ 'abc=def', [ 'ghi', [ 'jkl=mno', ] ], 'pqr', ]
+  # #---------------------------------------------------------------------------------------------------------
+  # '$chunk: parses nested bracketed expression (2)': ( test ) ->
+  #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+  #   source  = '<abc=def<ghi<jkl=mno>>pqr>'
+  #   # debug G.$chunk.run source
+  #   test.eq ( G.$chunk.run source ), [ 'abc=def', [ 'ghi', [ 'jkl=mno', ] ], 'pqr', ]
+
+  # #---------------------------------------------------------------------------------------------------------
+  # '$indent: parses opener': ( test ) ->
+  #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+  #   source  = '<'
+  #   # debug G.$indent.run source
+  #   test.eq ( G.$indent.run source ), '<'
+
+  # # #---------------------------------------------------------------------------------------------------------
+  # # '$line: parses line without metachrs': ( test ) ->
+  # #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+  # #   source  = 'ghijklmnop'
+  # #   # debug G.$chunk.run source
+  # #   test.eq ( G.$line.run source ), 'ghijklmnop'
+
+  # #---------------------------------------------------------------------------------------------------------
+  # '$step: parses line plus indent': ( test ) ->
+  #   G       = @
+  #   # G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+  #   source  = """loop【"""
+  #   # debug source
+  #   test.eq ( ( ƒ.seq G.$step, G.$indent ).run source ), [ 'loop', '【', ]
+
+  # #---------------------------------------------------------------------------------------------------------
+  # '$module: parses indented source (1)': ( test ) ->
+  #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': no
+  #   source  = """
+  #   abc
+  #   def
+  #     ghi
+  #       jkl
+  #       mno
+  #   pqr
+  #   """
+  #   # debug G.$module.run source
+  #   test.eq ( G.$module.run source ), [ 'abc', 'def', [ 'ghi', [ 'jkl', 'mno', ] ], 'pqr', ]
+
+  # #---------------------------------------------------------------------------------------------------------
+  # '$module: parses indented source (2)': ( test ) ->
+  #   G       = @$new opener: '<', connector: '=', closer: '>', 'join-suites': yes
+  #   source  = """
+  #   abc
+  #   def
+  #     ghi
+  #       jkl
+  #       mno
+  #   pqr
+  #   """
+  #   # debug G.$module.run source
+  #   test.eq ( G.$module.run source ), [ 'abc=def', [ 'ghi', [ 'jkl=mno', ] ], 'pqr', ]
 
 
   #---------------------------------------------------------------------------------------------------------

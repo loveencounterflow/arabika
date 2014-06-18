@@ -36,15 +36,15 @@ BNP                       = require 'coffeenode-bitsnpieces'
 # CONSTRUCTOR
 #-----------------------------------------------------------------------------------------------------------
 @constructor = ( G, $ ) ->
-  # debug '©421', ( name for name of G )
-  # debug '©421', ( name for name of $ )
-
 
   #=========================================================================================================
   # RULES
   #---------------------------------------------------------------------------------------------------------
   G.line = ->
-    return ƒ.or -> ƒ.or $[ 'line-parsers' ]...
+    ### TAINT we've built quite a contraption with these triple-nested `ƒ.or`s... ###
+    # whisper ( value? for value in $[ 'line-parsers'] )
+    whisper $[ 'line-parsers' ].length
+    return ƒ.or -> ƒ.or ( ( ƒ.or -> parser ) for parser in $[ 'line-parsers' ] )...
     # .onMatch ( match, state ) -> match
     .describe 'line'
 
@@ -93,16 +93,54 @@ BNP                       = require 'coffeenode-bitsnpieces'
   #=========================================================================================================
   # TESTS
   #---------------------------------------------------------------------------------------------------------
-  # G.tests[ 'break: break keyword' ] = ( test ) ->
-  #   keyword = $[ 'break-keyword' ]
-  #   probes_and_matchers  = [
-  #     [ "#{keyword}", {"type":"break","keyword":"break"}, ]
-  #     ]
-  #   #.......................................................................................................
-  #   for [ probe, matcher, ] in probes_and_matchers
-  #     result = ƒ.new._delete_grammar_references G.break.run probe
-  #     # debug JSON.stringify result
-  #     test.eq result, matcher
+  G.tests[ 'line: break' ] = ( test ) ->
+    keyword = 'break'
+    probes_and_matchers  = [
+      [ "#{keyword}", {"type":"break-statement","keyword":"break"}, ]
+      ]
+    #.......................................................................................................
+    for [ probe, matcher, ] in probes_and_matchers
+      debug
+      result = ƒ.new._delete_grammar_references G.line.run probe
+      # debug JSON.stringify result
+      test.eq result, matcher
+
+  #---------------------------------------------------------------------------------------------------------
+  G.tests[ 'line: loop' ] = ( test ) ->
+    keyword = 'loop'
+    probes_and_matchers  = [
+      [ "#{keyword}", "#{keyword}", ]
+      ]
+    #.......................................................................................................
+    for [ probe, matcher, ] in probes_and_matchers
+      debug
+      result = ƒ.new._delete_grammar_references G.line.run probe
+      # debug JSON.stringify result
+      test.eq result, matcher
+
+  #---------------------------------------------------------------------------------------------------------
+  G.tests[ 'line: assignment' ] = ( test ) ->
+    keyword = 'loop'
+    probes_and_matchers  = [
+      [ "x: 42", {"type":"assignment","lhs":{"type":"relative-route","raw":"x","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"x"}]},"mark":":","rhs":{"type":"NUMBER/integer","raw":"42","value":42}}, ]
+      ]
+    #.......................................................................................................
+    for [ probe, matcher, ] in probes_and_matchers
+      result = ƒ.new._delete_grammar_references G.line.run probe
+      # debug JSON.stringify result
+      test.eq result, matcher
+
+  #---------------------------------------------------------------------------------------------------------
+  G.tests[ 'line: route' ] = ( test ) ->
+    keyword = 'loop'
+    probes_and_matchers  = [
+      [ "x/foo/bar", {"type":"relative-route","raw":"x/foo/bar","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"x"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"foo"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"bar"}]}, ]
+      ]
+    #.......................................................................................................
+    for [ probe, matcher, ] in probes_and_matchers
+      result = ƒ.new._delete_grammar_references G.line.run probe
+      # debug JSON.stringify result
+      test.eq result, matcher
 
 
 

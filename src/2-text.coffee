@@ -78,8 +78,9 @@ XRE                       = require './9-xre'
 
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT String conversion method dubious; will fail outside of Unicode BMP ###
+### TAINT use new ES6 String API for codepoints ###
 @$_unicode_hex = ( ƒ.seq ( => @$_unicode4_metachr ), /[0-9a-fA-F]{4}/ )
-  .onMatch ( match ) => String.fromCharCode '0x' + match[ 1 ]
+  .onMatch ( match ) => String.fromCharCode '0x' + match[ 1 ][ 0 ]
 
 #-----------------------------------------------------------------------------------------------------------
 @$_escaped = ( ƒ.seq ( => @$_chr_escaper ), ( ƒ.or ( => @$_simple_escape ), ( => @$_unicode_hex ), ( => CHR.$chr ) ) )
@@ -127,8 +128,10 @@ XRE                       = require './9-xre'
       [ "#{escaper}n",         '\n' ]
       [ "#{escaper}r",         '\r' ]
       [ "#{escaper}t",         '\t' ] ]
-    for [ probe, result, ] in probes_and_matchers
-      test.eq ( @$_escaped.run probe ), result
+    for [ probe, matcher, ] in probes_and_matchers
+      result = ƒ.new._delete_grammar_references @$_escaped.run probe
+      # debug ( rpr probe ), ( rpr matcher ), ( rpr result )
+      test.eq ( @$_escaped.run probe ), matcher
 
   #---------------------------------------------------------------------------------------------------------
   '$nosq: accepts runs of chracters except unescaped single quote': ( test ) ->

@@ -52,8 +52,9 @@ XRE                       = require './9-xre'
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT `ƒ.or` is an expedient here ###
 @$new.$letter = ( G, $ ) ->
-  R = ƒ.regex XRE '\\p{L}'
+  R = ƒ.regex XRE '\\p{L}', 'A'
   R = R.onMatch ( match ) -> match[ 0 ]
+  R = R.describe 'CHR/$letter'
   return R
 
 

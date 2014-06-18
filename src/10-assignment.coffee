@@ -127,6 +127,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       node        = G.assignment.run probe
+      debug JSON.stringify ƒ.new._delete_grammar_references G.assignment.run probe
       translation = G.assignment.as.coffee node
       result      = ƒ.as.coffee.target translation
       # debug JSON.stringify result

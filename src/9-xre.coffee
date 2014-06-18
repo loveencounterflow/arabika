@@ -68,7 +68,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
 XRegExp                    = require 'xregexp3'
 #...........................................................................................................
 ### Always allow expressions like `\p{...}` to match beyond the Unicode BMP: ###
-XRegExp.install 'astral'
+# XRegExp.install 'astral'
 #...........................................................................................................
 ### Always allow new extensions: ###
 XRegExp.install 'extensibility'
@@ -140,14 +140,22 @@ XRE.$TESTS =
 #-----------------------------------------------------------------------------------------------------------
 
   #---------------------------------------------------------------------------------------------------------
-  '(all): even without flag `A`, `\\p{}` expressions match astral characters': ( test ) ->
-    matcher = XRegExp '\\pL'
-    test.eq ( '〇𠀝x'.match matcher )[ 0 ], '𠀝'
+  '(all): with flag `A`, `\\p{}` expressions match astral characters': ( test ) ->
+    # matcher = XRegExp '(\\pL){3}', 'A'
+    matcher = XRegExp '\\pL', 'A'
+    # test.eq ( '〇𠀝x'.match matcher )[ 0 ], '𠀝'
+    # debug matcher
+    test.eq ( '𠀝'.match matcher )[ 0 ], '𠀝'
 
   #---------------------------------------------------------------------------------------------------------
   '(all): even without flag `u`, `\\u{}` expressions match (astral) characters by codepoint': ( test ) ->
     test.eq ( '〇𠀝x'.match XRegExp '\\u{3007}' )[ 0 ], '〇'
     test.eq ( '〇𠀝x'.match XRegExp '\\u{2001d}' )[ 0 ], '𠀝'
+
+  #---------------------------------------------------------------------------------------------------------
+  '(all): even without flag `u`, `\\uXXXX` expressions match BMP characters by codepoint': ( test ) ->
+    test.eq ( '〇𠀝x'.match XRegExp '\\u3007' )[ 0 ], '〇'
+    # test.eq ( '〇𠀝x'.match XRegExp '\\u{2001d}' )[ 0 ], '𠀝'
 
   #---------------------------------------------------------------------------------------------------------
   '(all): even without flag `u`, `\\u{}` is rejected when argument is not a hexadecimal digit': ( test ) ->
@@ -192,6 +200,10 @@ XRE.$TESTS =
     test.eq ( '𠀁x\nabc'.match XRegExp '.+', 's'  )[ 0 ], '𠀁x\nabc'
 
 
+# info 'abc'.match XRE '\\p{L}'
+# info '𠀁abc'.match XRE '\\p{L}'
+# info '眾abc'.match XRE '\\p{L}'
+# process.exit()
 
 
 

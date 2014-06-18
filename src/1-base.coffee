@@ -1,6 +1,7 @@
 
 
 ############################################################################################################
+TYPES                     = require 'coffeenode-types'
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
 badge                     = '﴾1-base﴿'
@@ -32,13 +33,19 @@ XRE                       = require './9-xre'
 @$_use_keyword     = ƒ.or => ƒ.string @$[ 'use-keyword' ]
 
 #-----------------------------------------------------------------------------------------------------------
-@use_argument     = ƒ.or ( => ROUTE.symbol ), ( => NUMBER.digits ), ( => TEXT.literal )
+@use_argument     = ƒ.or ( => ROUTE.symbol ), ( => NUMBER.integer ), ( => TEXT.literal )
 
 #-----------------------------------------------------------------------------------------------------------
 @use_statement    = ( ƒ.seq ( => @$_use_keyword ), ( => CHR.ilws ), ( => @use_argument ) )
-  .onMatch ( match ) =>
-    [ keyword, { raw, value } ] = match
-    return ƒ.new.x_use_statement keyword, raw
+  .onMatch ( match, state ) => @nodes.use_statement state, match[ 0 ], match[ 1 ]
+
+#-----------------------------------------------------------------------------------------------------------
+@nodes = {}
+_G = @
+@nodes.use_statement = ( state, keyword, argument ) ->
+  return ƒ.new._XXX_YYY_node _G.use_statement.as, state, 'BASE/use-statement',
+    keyword:    keyword
+    argument:   argument
 
 
 #===========================================================================================================
@@ -62,11 +69,11 @@ XRE                       = require './9-xre'
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
-  'use_argument: accepts digits': ( test ) ->
+  'use_argument: accepts integer': ( test ) ->
     G = @
     $ = G.$
     probes_and_matchers = [
-      [ "12349876",       ƒ.new.literal 'digits', "12349876", "12349876" ]
+      [ "12349876",       { type: 'NUMBER/integer', raw: '12349876', value: 12349876 } ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
@@ -95,11 +102,11 @@ XRE                       = require './9-xre'
     mark    = ROUTE.$[ 'symbol/mark' ]
     keyword = G.$[ 'use-keyword' ]
     probes_and_matchers = [
-      [ "use #{mark}x",       ƒ.new.x_use_statement keyword, "#{mark}x",   "x" ]
-      [ "use #{mark}foo",     ƒ.new.x_use_statement keyword, "#{mark}foo", "foo" ]
-      [ "use 12349876",       ƒ.new.x_use_statement keyword, "12349876", "12349876" ]
-      [ "use 'some text'",    ƒ.new.x_use_statement keyword, "'some text'", "some text" ]
-      [ 'use "other text"' ,  ƒ.new.x_use_statement keyword, '"other text"', 'other text' ]
+      [ "use #{mark}x",       {"type":"BASE/use-statement","keyword":"use","argument":{"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":x","value":"x"}}   ]
+      [ "use #{mark}foo",     {"type":"BASE/use-statement","keyword":"use","argument":{"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":foo","value":"foo"}} ]
+      [ "use 12349876",       {"type":"BASE/use-statement","keyword":"use","argument":{"type":"NUMBER/integer","raw":"12349876","value":12349876}} ]
+      [ "use 'some text'",    {"type":"BASE/use-statement","keyword":"use","argument":{"type":"Literal","x-subtype":"text","raw":"'some text'","value":"some text"}}  ]
+      [ 'use "other text"',   {"type":"BASE/use-statement","keyword":"use","argument":{"type":"Literal","x-subtype":"text","raw":"\"other text\"","value":"other text"}}  ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers

@@ -33,8 +33,8 @@ XRE                       = require './9-xre'
 
   #.........................................................................................................
   ### Leading and trailing characters in names (excluding sigils): ###
-  'identifier/first-chr':     XRE '\\p{L}'
-  'identifier/trailing-chrs': XRE '(?:-|\\p{L}|\\d)*'
+  'identifier/first-chr':     XRE '\\p{L}', 'A'
+  'identifier/trailing-chrs': XRE '(?:-|\\p{L}|\\d)*', 'A'
   # 'identifier/first-chr':     /[a-zA-Z國畫很美]|𠀁/
   # 'identifier/trailing-chrs': /(?:-|[a-zA-Z國畫很美]|𠀁|\d)*/
 
@@ -236,10 +236,10 @@ XRE                       = require './9-xre'
   # NAMES
   #---------------------------------------------------------------------------------------------------------
   G.tests[ '$identifier_first_chr: matches first character of names' ] = ( test ) ->
-    probes = [ 'a', 'A', '𠀁',  ]
+    probes = [ 'a', 'A', '𠀁', ]
     for probe in probes
       result = G.$identifier_first_chr.run probe
-      # debug JSON.stringify result
+      # debug JSON.stringify [ probe, result, ]
       test.eq result, probe
 
   #---------------------------------------------------------------------------------------------------------
@@ -385,18 +385,18 @@ XRE                       = require './9-xre'
       test.eq result, matcher
 
 
-  # #---------------------------------------------------------------------------------------------------------
-  # # TRANSLATORS
-  # #---------------------------------------------------------------------------------------------------------
-  # 'as.coffee: render relative route as CoffeeScript': ( test ) ->
-  #   probes_and_matchers = [
-  #     [ """foo/bar/!baz""", "$FM[ 'scope' ][ 'foo' ][ 'bar' ][ '!baz' ]" ]
-  #     ]
-  #   for [ probe, matcher, ] in probes_and_matchers
-  #     node    = G.route.run probe
-  #     result  = ( G.as.coffee node )[ 'target' ]
-  #     # debug JSON.stringify result
-  #     test.eq result, matcher
+  #---------------------------------------------------------------------------------------------------------
+  # TRANSLATORS
+  #---------------------------------------------------------------------------------------------------------
+  G.tests[ 'as.coffee: render relative route as CoffeeScript' ] = ( test ) ->
+    probes_and_matchers = [
+      [ """foo/bar/!baz""", "$FM[ 'scope' ][ 'foo' ][ 'bar' ][ '!baz' ]" ]
+      ]
+    for [ probe, matcher, ] in probes_and_matchers
+      node    = G.route.run probe
+      result  = ( G.route.as.coffee node )[ 'target' ]
+      # debug JSON.stringify result
+      test.eq result, matcher
 
   # #---------------------------------------------------------------------------------------------------------
   # 'as.coffee: render absolute route as CoffeeScript': ( test ) ->
@@ -457,5 +457,6 @@ XRE                       = require './9-xre'
 
 ############################################################################################################
 ƒ.new.consolidate @
+
 
 
