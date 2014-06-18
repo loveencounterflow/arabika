@@ -89,9 +89,22 @@ XRE                       = require './9-xre'
 #-----------------------------------------------------------------------------------------------------------
 ### TAINT maybe we should *not* un-escape anything; better for translation ###
 @literal = ( ƒ.or ( => @$_sq_literal ), ( => @$_dq_literal ) )
-@literal = @literal.onMatch ( match ) =>
-    [ ignore, value, ignore, ] = match
-    return $new.literal 'text', ( match.join '' ), value
+@literal = @literal.onMatch ( match, state ) =>
+  [ ignore, value, ignore, ] = match
+  return @nodes.literal state, value
+
+#-----------------------------------------------------------------------------------------------------------
+@literal.as =
+  coffee: ( node ) ->
+    { value }   = node
+    return target: rpr value
+
+#-----------------------------------------------------------------------------------------------------------
+G = @
+@nodes = {}
+@nodes.literal = ( state, value ) ->
+    return ƒ.new._XXX_YYY_node G.literal.as, state, 'TEXT/literal',
+      'value':    value
 
 
 #===========================================================================================================
@@ -159,15 +172,35 @@ XRE                       = require './9-xre'
   #---------------------------------------------------------------------------------------------------------
   '$literal: accepts single and double quoted string literals': ( test ) ->
     probes_and_matchers = [
-      [ '"0"',           {"type":"Literal","x-subtype":"text","raw":"\"0\"","value":"0"}, ]
-      [ '"qwertz"',      {"type":"Literal","x-subtype":"text","raw":"\"qwertz\"","value":"qwertz"}, ]
-      [ "'中華人民共和國'",     {"type":"Literal","x-subtype":"text","raw":"'中華人民共和國'","value":"中華人民共和國"}, ]
+      [ '"0"',           {"type":"TEXT/literal","value":"0"}, ]
+      [ '"qwertz"',      {"type":"TEXT/literal","value":"qwertz"}, ]
+      [ "'中華人民共和國'",     {"type":"TEXT/literal","value":"中華人民共和國"}, ]
       ]
     for [ probe, matcher, ] in probes_and_matchers
-      result = @literal.run probe
+      result = ƒ.new._delete_grammar_references @literal.run probe
       # debug JSON.stringify result
       test.eq result, matcher
 
+
+  #---------------------------------------------------------------------------------------------------------
+  # G.tests[ 'as.coffee: render assignment as CoffeeScript' ] = ( test ) ->
+  'as.coffee: render text literal as CoffeeScript': ( test ) ->
+    G       = @
+    probes_and_matchers  = [
+      [ '"0"',           "'0'", ]
+      [ '"qwertz"',      "'qwertz'", ]
+      [ "'中華人民共和國'",     "'中華人民共和國'", ]
+      ]
+    #.......................................................................................................
+    for [ probe, matcher, ] in probes_and_matchers
+      node        = G.literal.run probe
+      # debug JSON.stringify ƒ.new._delete_grammar_references G.literal.run probe
+      translation = G.literal.as.coffee node
+      result      = ƒ.as.coffee.target translation
+      # debug JSON.stringify result
+      # debug JSON.stringify result
+      # debug '\n' + result
+      test.eq result, matcher
 
 
 

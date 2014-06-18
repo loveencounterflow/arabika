@@ -86,8 +86,8 @@ BNP                       = require 'coffeenode-bitsnpieces'
     joiner  = $.ROUTE.$[ 'crumb/joiner' ]
     mark    = $[ 'mark' ]
     probes_and_matchers  = [
-      [ "abc#{mark} 42", {"type":"assignment","lhs":{"type":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]},"mark":":","rhs":{"type":"Literal","x-subtype":"integer","raw":"42","value":42}}, ]
-      [ "𠀁#{mark} '42'", {"type":"assignment","lhs":{"type":"relative-route","raw":"𠀁","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"𠀁"}]},"mark":":","rhs":{"type":"Literal","x-subtype":"text","raw":"'42'","value":"42"}}, ]
+      [ "abc#{mark} 42", {"type":"assignment","lhs":{"type":"relative-route","raw":"abc","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"abc"}]},"mark":":","rhs":{"type":"NUMBER/integer","raw":"42","value":42}}, ]
+      [ "𠀁#{mark} '42'", {"type":"assignment","lhs":{"type":"relative-route","raw":"𠀁","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"𠀁"}]},"mark":":","rhs":{"type":"TEXT/literal","value":"42"}}, ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
@@ -105,8 +105,8 @@ BNP                       = require 'coffeenode-bitsnpieces'
     joiner  = $.ROUTE.$[ 'crumb/joiner' ]
     mark    = $[ 'mark' ]
     probes_and_matchers  = [
-      [ "yet#{joiner}another#{joiner}route#{mark} 42", {"type":"assignment","lhs":{"type":"relative-route","raw":"yet/another/route","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"yet"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"another"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"route"}]},"mark":":","rhs":{"type":"Literal","x-subtype":"integer","raw":"42","value":42}}, ]
-      [ "#{joiner}chinese#{joiner}𠀁#{mark} '42'", {"type":"assignment","lhs":{"type":"absolute-route","raw":"/chinese/𠀁","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"chinese"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"𠀁"}]},"mark":":","rhs":{"type":"Literal","x-subtype":"text","raw":"'42'","value":"42"}}, ]
+      [ "yet#{joiner}another#{joiner}route#{mark} 42", {"type":"assignment","lhs":{"type":"relative-route","raw":"yet/another/route","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"yet"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"another"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"route"}]},"mark":":","rhs":{"type":"NUMBER/integer","raw":"42","value":42}}, ]
+      [ "#{joiner}chinese#{joiner}𠀁#{mark} '42'", {"type":"assignment","lhs":{"type":"absolute-route","raw":"/chinese/𠀁","value":[{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"chinese"},{"type":"Identifier","x-subtype":"identifier-without-sigil","name":"𠀁"}]},"mark":":","rhs":{"type":"TEXT/literal","value":"42"}}, ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
@@ -121,15 +121,16 @@ BNP                       = require 'coffeenode-bitsnpieces'
     mark    = $[ 'mark' ]
     # debug ( rpr joiner ), ( rpr mark )
     probes_and_matchers  = [
-      [ "yet#{joiner}another#{joiner}route#{mark} 42", "### unable to find translator for Literal/integer ###\n$FM[ 'scope' ][ 'yet' ][ 'another' ][ 'route' ] = 42", ]
-      [ "#{joiner}chinese#{joiner}𠀁#{mark} 'some text'", "### unable to find translator for Literal/text ###\n$FM[ 'global' ][ 'chinese' ][ '𠀁' ] = 'some text'", ]
+      [ "yet#{joiner}another#{joiner}route#{mark} 42", "$FM[ 'scope' ][ 'yet' ][ 'another' ][ 'route' ] = 42", ]
+      [ "#{joiner}chinese#{joiner}𠀁#{mark} 'some text'", "$FM[ 'global' ][ 'chinese' ][ '𠀁' ] = 'some text'", ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       node        = G.assignment.run probe
-      debug JSON.stringify ƒ.new._delete_grammar_references G.assignment.run probe
+      # debug JSON.stringify ƒ.new._delete_grammar_references G.assignment.run probe
       translation = G.assignment.as.coffee node
       result      = ƒ.as.coffee.target translation
+      # debug JSON.stringify result
       # debug JSON.stringify result
       # debug '\n' + result
       test.eq result, matcher

@@ -48,26 +48,6 @@ BNP                       = require 'coffeenode-bitsnpieces'
     # .onMatch ( match, state ) -> match
     .describe 'line'
 
-  # #---------------------------------------------------------------------------------------------------------
-  # G.loop_keyword = ->
-  #   return ƒ.or -> $[ 'loop-keyword' ]
-  #   .onMatch ( match, state ) -> G.nodes.loop state
-
-  # #---------------------------------------------------------------------------------------------------------
-  # G.loop_statement = ->
-  #   # return ƒ.seq ( -> $[ 'loop-keyword' ] ), ( -> $.INDENTATION.$stage )
-  #   return ƒ.seq ( -> $.INDENTATION.$step ), ( $.INDENTATION.$chunk )
-  #   .onMatch ( match, state ) -> G.nodes.loop state, match[ 0 ], match[ 1 ]
-  #   .describe 'loop'
-
-  # #---------------------------------------------------------------------------------------------------------
-  # G.loop = ->
-  #   lws_before = if $[ 'needs-lws-before' ] then ( -> $.CHR.ilws ) else ƒ.drop ''
-  #   lws_after  = if $[ 'needs-lws-after'  ] then ( -> $.CHR.ilws ) else ƒ.drop ''
-  #   return ƒ.seq ( -> $.ROUTE.route ), lws_before, $[ 'mark' ], lws_after, ( -> G._TEMPORARY_expression )
-  #   .onMatch ( match, state ) -> G.nodes.assignment state, match...
-  #   .describe 'assignment'
-
   #---------------------------------------------------------------------------------------------------------
   # G.break.as =
   #   coffee: ( node ) ->
@@ -102,7 +82,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
     for [ probe, matcher, ] in probes_and_matchers
       debug
       result = ƒ.new._delete_grammar_references G.line.run probe
-      # debug JSON.stringify result
+      debug JSON.stringify result
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------

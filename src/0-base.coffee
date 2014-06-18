@@ -86,13 +86,13 @@ _G = @
     G = @
     $ = G.$
     probes_and_matchers = [
-      [ "'some text'",    ƒ.new.literal 'text', "'some text'", "some text" ]
-      [ '"other text"' ,  ƒ.new.literal 'text', '"other text"', 'other text' ]
+      [ "'some text'",    {"type":"TEXT/literal","value":"some text"} ]
+      [ '"other text"' ,  {"type":"TEXT/literal","value":"other text"} ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
       result = ƒ.new._delete_grammar_references G.use_argument.run probe
-      # debug JSON.stringify @use_argument.run probe
+      # debug JSON.stringify result
       test.eq result, matcher
 
   #---------------------------------------------------------------------------------------------------------
@@ -105,8 +105,8 @@ _G = @
       [ "use #{mark}x",       {"type":"BASE/use-statement","keyword":"use","argument":{"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":x","value":"x"}}   ]
       [ "use #{mark}foo",     {"type":"BASE/use-statement","keyword":"use","argument":{"type":"Literal","x-subtype":"symbol","x-mark":":","raw":":foo","value":"foo"}} ]
       [ "use 12349876",       {"type":"BASE/use-statement","keyword":"use","argument":{"type":"NUMBER/integer","raw":"12349876","value":12349876}} ]
-      [ "use 'some text'",    {"type":"BASE/use-statement","keyword":"use","argument":{"type":"Literal","x-subtype":"text","raw":"'some text'","value":"some text"}}  ]
-      [ 'use "other text"',   {"type":"BASE/use-statement","keyword":"use","argument":{"type":"Literal","x-subtype":"text","raw":"\"other text\"","value":"other text"}}  ]
+      [ "use 'some text'",    {"type":"BASE/use-statement","keyword":"use","argument":{"type":"TEXT/literal","value":"some text"}}  ]
+      [ 'use "other text"',   {"type":"BASE/use-statement","keyword":"use","argument":{"type":"TEXT/literal","value":"other text"}}  ]
       ]
     #.......................................................................................................
     for [ probe, matcher, ] in probes_and_matchers
