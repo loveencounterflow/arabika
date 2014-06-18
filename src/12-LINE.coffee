@@ -43,7 +43,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
   G.line = ->
     ### TAINT we've built quite a contraption with these triple-nested `ƒ.or`s... ###
     # whisper ( value? for value in $[ 'line-parsers'] )
-    whisper $[ 'line-parsers' ].length
+    # whisper $[ 'line-parsers' ].length
     return ƒ.or -> ƒ.or ( ( ƒ.or -> parser ) for parser in $[ 'line-parsers' ] )...
     # .onMatch ( match, state ) -> match
     .describe 'line'
