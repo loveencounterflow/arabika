@@ -15,7 +15,7 @@ echo                      = TRM.echo.bind TRM
 ƒ                         = require 'flowmatic'
 @$new                     = ƒ.new.new @
 BNP                       = require 'coffeenode-bitsnpieces'
-XRE                       = require './9-xre'
+XRE                       = require './XRE'
 
 #-----------------------------------------------------------------------------------------------------------
 @$ =

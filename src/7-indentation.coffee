@@ -36,7 +36,7 @@ rainbow                   = TRM.rainbow.bind TRM
 ƒ                         = require 'flowmatic'
 @$new                     = ƒ.new.new @
 CHR                       = require './3-chr'
-XRE                       = require './9-xre'
+XRE                       = require './XRE'
 
 
 

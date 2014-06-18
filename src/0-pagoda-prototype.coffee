@@ -39,7 +39,7 @@ rainbow                   = TRM.rainbow.bind TRM
 BNP                       = require 'coffeenode-bitsnpieces'
 ƒ                         = require 'flowmatic'
 $new                      = ƒ.new
-XRE                       = require './9-xre'
+XRE                       = require './XRE'
 
 
 #-----------------------------------------------------------------------------------------------------------

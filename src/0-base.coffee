@@ -21,7 +21,7 @@ TEXT                      = require './2-text'
 CHR                       = require './3-chr'
 NUMBER                    = require './4-number'
 ROUTE                     = require './6-route'
-XRE                       = require './9-xre'
+XRE                       = require './XRE'
 
 
 #-----------------------------------------------------------------------------------------------------------

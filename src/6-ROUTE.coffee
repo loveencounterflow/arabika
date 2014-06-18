@@ -19,7 +19,7 @@ echo                      = TRM.echo.bind TRM
 ƒ                         = require 'flowmatic'
 BNP                       = require 'coffeenode-bitsnpieces'
 ### TAINT XRE will become a FlowMatic helper module ###
-XRE                       = require './9-xre'
+XRE                       = require './XRE'
 
 
 #===========================================================================================================

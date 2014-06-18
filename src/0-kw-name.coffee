@@ -20,7 +20,7 @@ echo                      = TRM.echo.bind TRM
 @$new                     = ƒ.new.new @
 BNP                       = require 'coffeenode-bitsnpieces'
 CHR                       = require './3-chr'
-XRE                       = require './9-xre'
+XRE                       = require './XRE'
 
 # show_matches = yes
 # show_matches = no

@@ -21,7 +21,7 @@ BNP                       = require 'coffeenode-bitsnpieces'
 ƒ                         = require 'flowmatic'
 $new                      = ƒ.new
 CHR                       = require './3-chr'
-XRE                       = require './9-xre'
+XRE                       = require './XRE'
 
 #-----------------------------------------------------------------------------------------------------------
 @$_constants =
