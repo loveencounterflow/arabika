@@ -132,6 +132,7 @@ module.exports = XRE = ( P... ) ->
 # debug (require 'coffeenode-types').type_of XRE
 
 #-----------------------------------------------------------------------------------------------------------
+### TAINT use method offered by XRegExp ###
 XRE.$esc = BNP.escape_regex.bind BNP
 
 
