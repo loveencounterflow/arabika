@@ -124,7 +124,7 @@ TEXT                      = require 'coffeenode-text'
       #.....................................................................................................
       if type is null
         send_buffer()
-        return handler null, 'newline'
+        handler null, 'newline'
         return handler null, null
       #.....................................................................................................
       if type is 'newline'
@@ -161,10 +161,11 @@ TEXT                      = require 'coffeenode-text'
     adjust_content_level = ( content ) ->
       indentation = ( content.match dent_matcher )[ 0 ]
       level       = indentation.length / dent_length
+      whisper level, level - last_level, rpr content
       content     = content.replace indentation, ''
       unless level is Math.floor level
         return handler new Error "illegal indentation on line #xxx: #{rpr content}"
-      if      last_level > level then content = content + ( TEXT.repeat closer, last_level - level )
+      if      last_level > level then content = ( TEXT.repeat closer, last_level - level ) + content
       else if last_level < level then content = ( TEXT.repeat opener, level - last_level ) + content
       else                            content = connector + content
       last_level = level
@@ -205,6 +206,8 @@ TEXT                      = require 'coffeenode-text'
   # TESTS
   #---------------------------------------------------------------------------------------------------------
   G.tests._sources = [
+    #.......................................................................................................
+    # 0
     """#!/whatever
     something # a comment # with hashes
     # another comment
@@ -224,6 +227,8 @@ TEXT                      = require 'coffeenode-text'
       taking up 2 lines ###
     log "message" + 'foo'
     """,
+    #.......................................................................................................
+    # 1
     """
     d:
       a: \"""helo
@@ -233,6 +238,8 @@ TEXT                      = require 'coffeenode-text'
         bb: 66
         bc: 67
     """,
+    #.......................................................................................................
+    # 2
     """
     d:
       a: 64
@@ -246,41 +253,37 @@ TEXT                      = require 'coffeenode-text'
     '' ]
 
   #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'helpers.walk_chunkify_events_1' ] = ( test ) ->
-    source  = G.tests._sources[ 0 ]
-    #.......................................................................................................
-    G.helpers.walk_chunkify_events_1 source, ( error, type, content ) ->
-      throw error if error?
-      info ( TEXT.flush_right type, 15 ), if content? then TRM.gold rpr content else ''
+  G.tests._show_type_and_content = ( error, type, content ) ->
+    throw error if error?
+    info ( TEXT.flush_right type, 15 ), if content? then TRM.gold rpr content else ''
 
   #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'helpers.walk_chunkify_events_2' ] = ( test ) ->
-    source  = G.tests._sources[ 0 ]
-    #.......................................................................................................
-    G.helpers.walk_chunkify_events_2 source, ( error, type, content ) ->
-      throw error if error?
-      info ( TEXT.flush_right type, 15 ), if content? then TRM.gold rpr content else ''
-
-  #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'helpers.walk_chunkify_events_3 (0)' ] = ( test ) ->
+  G.tests[ '_helpers.walk_chunkify_events_3 (0)' ] = ( test ) ->
     source  = G.tests._sources[ 0 ]
     #.......................................................................................................
     G.helpers.walk_chunkify_events_3 source, ( error, type, content ) ->
-      throw error if error?
-      info ( TEXT.flush_right type, 15 ), if content? then TRM.gold rpr content else ''
+      G.tests._show_type_and_content error, type, content
+
+  #---------------------------------------------------------------------------------------------------------
+  G.tests[ 'helpers.walk_chunkify_events_1 (1)' ] = ( test ) ->
+    source  = G.tests._sources[ 1 ]
+    #.......................................................................................................
+    G.helpers.walk_chunkify_events_1 source, ( error, type, content ) ->
+      G.tests._show_type_and_content error, type, content
+
+  #---------------------------------------------------------------------------------------------------------
+  G.tests[ 'helpers.walk_chunkify_events_2 (1)' ] = ( test ) ->
+    source  = G.tests._sources[ 1 ]
+    #.......................................................................................................
+    G.helpers.walk_chunkify_events_2 source, ( error, type, content ) ->
+      G.tests._show_type_and_content error, type, content
 
   #---------------------------------------------------------------------------------------------------------
   G.tests[ 'helpers.walk_chunkify_events_3 (1)' ] = ( test ) ->
-    source  = G.tests._sources[ 2 ]
+    source  = G.tests._sources[ 1 ]
     #.......................................................................................................
     G.helpers.walk_chunkify_events_3 source, ( error, type, content ) ->
-      throw error if error?
-      info ( TEXT.flush_right type, 15 ), if content? then TRM.gold rpr content else ''
-
-  #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'helpers.as_bracketed (0)' ] = ( test ) ->
-    source  = G.tests._sources[ 0 ]
-    debug rpr G.helpers.as_bracketed source
+      G.tests._show_type_and_content error, type, content
 
   #---------------------------------------------------------------------------------------------------------
   G.tests[ 'helpers.as_bracketed (1)' ] = ( test ) ->
@@ -288,7 +291,12 @@ TEXT                      = require 'coffeenode-text'
     debug rpr G.helpers.as_bracketed source
 
   #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'helpers.as_bracketed (2)' ] = ( test ) ->
+  G.tests[ '_helpers.as_bracketed (0)' ] = ( test ) ->
+    source  = G.tests._sources[ 0 ]
+    debug rpr G.helpers.as_bracketed source
+
+  #---------------------------------------------------------------------------------------------------------
+  G.tests[ '_helpers.as_bracketed (2)' ] = ( test ) ->
     source  = G.tests._sources[ 2 ]
     debug rpr G.helpers.as_bracketed source
 
