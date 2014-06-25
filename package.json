@@ -23,6 +23,7 @@
     "coffeenode-bitsnpieces": "0.0.22",
     "coffeenode-fillin": "^0.1.7",
     "coffeenode-packrattle": "^3.0.1",
+    "coffeenode-step": "^0.1.1",
     "coffeenode-trm": "^0.1.15",
     "coffeenode-types": "^0.1.1",
     "escodegen": "^1.3.2",

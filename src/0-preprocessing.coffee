@@ -6,7 +6,7 @@
 #...........................................................................................................
 TRM                       = require 'coffeenode-trm'
 rpr                       = TRM.rpr.bind TRM
-badge                     = '﴾5-quantity﴿'
+badge                     = '﴾0-preprocessing﴿'
 log                       = TRM.get_logger 'plain',     badge
 info                      = TRM.get_logger 'info',      badge
 whisper                   = TRM.get_logger 'whisper',   badge
@@ -19,6 +19,7 @@ echo                      = TRM.echo.bind TRM
 ƒ                         = require 'flowmatic'
 XRE                       = require './XRE'
 TEXT                      = require 'coffeenode-text'
+STEP                      = require 'coffeenode-step'
 
 
 #===========================================================================================================
@@ -31,6 +32,17 @@ TEXT                      = require 'coffeenode-text'
 # CONSTRUCTOR
 #-----------------------------------------------------------------------------------------------------------
 @constructor = ( G, $ ) ->
+
+  #---------------------------------------------------------------------------------------------------------
+  G.helpers.new_event = ( type, position, content, has_newline ) ->
+    R =
+      'type':           type
+      'position':       position
+      'content':        content
+      'has-newline':    has_newline
+      'level-delta':    null
+      'level':          null
+    return R
 
   #---------------------------------------------------------------------------------------------------------
   G.helpers._normalize_newlines = ( source ) ->
@@ -62,16 +74,15 @@ TEXT                      = require 'coffeenode-text'
     return R
 
   #---------------------------------------------------------------------------------------------------------
-  G.helpers.walk_chunkify_events_1 = ( source, handler ) ->
+  G.helpers.step_chunkify_events = ( source, handler ) ->
     type      = 'other'
-    last_type = type
+    # last_type = type
     lines     = G.helpers._lines_of source
     #.......................................................................................................
     for line, line_idx in lines
-      handler null, 'newline'
-      type  = 'other' if type is 'eol-comment'
-      parts = G.helpers._parts_of line
-      # whisper ( rpr line ), TRM.lime parts
+      type          = 'other' if type is 'eol-comment'
+      parts         = G.helpers._parts_of line
+      last_part_idx = parts.length - 1
       #.....................................................................................................
       for part, part_idx in parts
         #.....................................................................................................
@@ -100,100 +111,126 @@ TEXT                      = require 'coffeenode-text'
             if type is 'single-sq'      then type = 'other'
             else if type is 'other'     then type = 'single-sq'
         #...................................................................................................
-        if ( type is 'other' ) and ( last_type isnt 'other' ) and ( last_type isnt 'eol-comment' )
-          handler null, last_type, part
-        else
-          handler null, type, part
-        last_type = type
+        handler null, type, part, part_idx is last_part_idx
     #.......................................................................................................
-    handler null, null
+    handler null, null, null, null, null
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  G.helpers.walk_chunkify_events_2 = ( source, handler ) ->
-    buffer    = []
-    last_type = null
+  G.helpers.step_events = ( source, handler ) ->
+    stepper   = STEP.call_back G.helpers.step_chunkify_events, source
+    is_fenced =
+      'block-comment':  1
+      'triple-dq':      1
+      'triple-sq':      1
+      'single-dq':      1
+      'single-sq':      1
     #-------------------------------------------------------------------------------------------------------
-    send_buffer = ->
-      handler null, last_type, buffer.join '' if buffer.length isnt 0
-      buffer.length = 0
-    #-------------------------------------------------------------------------------------------------------
-    G.helpers.walk_chunkify_events_1 source, ( error, type, content ) ->
-      throw error if error?
-      # info type, if content? then TRM.gold rpr content else ''
+    STEP.triplets stepper, ( error, last_value, this_value, next_value ) ->
+      return handler error if error?
+      return handler null, null if last_value is null
       #.....................................................................................................
-      if type is null
-        send_buffer()
-        handler null, 'newline'
-        return handler null, null
+      this_position                             = 'middle'
+      [ last_type                             ] = last_value
+      [ this_type, this_content, this_has_nl  ] = this_value
+      [ next_type                             ] = next_value
       #.....................................................................................................
-      if type is 'newline'
-        #...................................................................................................
-        if ( last_type is 'other' ) or ( last_type is 'eol-comment' )
-          send_buffer()
-          handler null, 'newline'
-          return
-        #...................................................................................................
-        if last_type isnt null
-          buffer.push '\n'
-          type = last_type
-        return
+      ### Correct early ending of fenced constructs such as `'quoted strings'`: ###
+      if is_fenced[ last_type ]
+        if this_type isnt last_type
+          this_position = 'stop'
+          this_type     = last_type
+      else if is_fenced[ this_type ]
+        if this_type isnt last_type
+          this_position = 'start'
+        else
+          this_position = 'middle'
+      else
+        this_position = 'other'
       #.....................................................................................................
-      send_buffer() if ( last_type isnt null ) and ( type isnt last_type )
-      last_type = type
-      buffer.push content
+      # info ( TRM.grey TEXT.flush_right last_type,        12 ),
+      #   TRM.grey TEXT.flush_right this_type,        12
+      #   TRM.grey TEXT.flush_left this_position,    8
+      #   TRM.lime TEXT.flush_left  ( rpr this_content ), 12
+      #   TRM.gold if this_has_nl then '+' else ' '
+      #   TRM.grey next_type
+      handler null, G.helpers.new_event this_type, this_position, this_content, this_has_nl
     #-------------------------------------------------------------------------------------------------------
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  G.helpers.walk_chunkify_events_3 = ( source, handler ) ->
-    last_type     = null
-    ### TAINT simplified setup ###
+  G.helpers.step_events_with_levels = ( source, handler ) ->
     level         = 0
     last_level    = level
-    dent          = '  '
+    ### TAINT simplified and non-parametrized implementation of indentation ###
+    has_newline   = yes
+    had_newline   = had_newline
+    dent          = ' '
     dent_length   = dent.length
     dent_matcher  = /// ^ (?: #{XRE.$esc dent} )* ///
-    opener        = '('
-    connector     = ';'
-    closer        = ')'
     #-------------------------------------------------------------------------------------------------------
-    adjust_content_level = ( content ) ->
-      indentation = ( content.match dent_matcher )[ 0 ]
-      level       = indentation.length / dent_length
-      whisper level, level - last_level, rpr content
-      content     = content.replace indentation, ''
+    adjust_level = ( event, content ) ->
+      ### TAINT must complain when extra whitespace found ###
+      content                 = event[ 'content' ]
+      indentation             = ( content.match dent_matcher )[ 0 ]
+      level                   = indentation.length / dent_length / 2
+      #.....................................................................................................
       unless level is Math.floor level
         return handler new Error "illegal indentation on line #xxx: #{rpr content}"
-      if      last_level > level then content = ( TEXT.repeat closer, last_level - level ) + content
-      else if last_level < level then content = ( TEXT.repeat opener, level - last_level ) + content
-      else                            content = connector + content
-      last_level = level
-      return content
+      #.....................................................................................................
+      content                 = content.replace indentation, ''
+      event[ 'content' ]      = content
+      set_level event
     #-------------------------------------------------------------------------------------------------------
-    G.helpers.walk_chunkify_events_2 source, ( error, type, content ) ->
+    set_level = ( event ) ->
+      event[ 'level'        ] = level
+      event[ 'level-delta'  ] = level - last_level
+      last_level              = level
+      had_newline             = has_newline
+      return null
+    #-------------------------------------------------------------------------------------------------------
+    G.helpers.step_events source, ( error, event ) ->
       throw error if error?
+      return handler null, null if event is null
+      { type, position, content, 'has-newline': has_newline } = event
       #.....................................................................................................
-      ### Pass through events that are irrelevant for indentation: ###
-      if ( type isnt 'other' ) and ( type isnt 'newline' )
-        return handler null, type, content
+      if ( not had_newline ) or type isnt 'other'
+        set_level event
+        return handler null, event
       #.....................................................................................................
-      if type is 'other' and last_type is 'newline'
-        content = adjust_content_level content
-      #.....................................................................................................
-      if content? then handler null, type, content else handler null, type
-      last_type = type
-      return
+      adjust_level event if had_newline
+      handler null, event
     #-------------------------------------------------------------------------------------------------------
     return null
 
   #---------------------------------------------------------------------------------------------------------
   G.helpers.as_bracketed = ( source ) ->
-    R = []
+    ### TAINT must parametrize these ###
+    opener        = '('
+    # connector     = ';'
+    closer        = ')'
+    R             = []
     #-------------------------------------------------------------------------------------------------------
-    G.helpers.walk_chunkify_events_3 source, ( error, type, content ) ->
+    G.helpers.step_events_with_levels source, ( error, event ) ->
       throw error if error?
-      R.push content unless type is 'newline'
+      return R if event is null
+      #.....................................................................................................
+      { type, content, 'level-delta': level_delta, 'has-newline': has_newline } = event
+      #.....................................................................................................
+      if level_delta > 0
+        R.push opener for idx in [ 0 ... level_delta ]
+        R.push content
+      #.....................................................................................................
+      else if level_delta < 0
+        R.push content
+        R.push closer for idx in [ level_delta ... 0 ]
+      #.....................................................................................................
+      else
+        R.push content
+      #.....................................................................................................
+      if has_newline
+        # R.push if type is 'other' then connector else '\n'
+        R.push '\n'
     #-------------------------------------------------------------------------------------------------------
     return R.join ''
 
@@ -231,12 +268,17 @@ TEXT                      = require 'coffeenode-text'
     # 1
     """
     d:
-      a: \"""helo
+      a: \"""helo # ###
         world\"""
       b:
-        ba: 65
-        bb: 66
+
+        ba: 'A(B)C'# comment
+        bb: ''
         bc: 67
+    e: 42
+    f
+      ### comment ###
+      'foo'
     """,
     #.......................................................................................................
     # 2
@@ -253,52 +295,41 @@ TEXT                      = require 'coffeenode-text'
     '' ]
 
   #---------------------------------------------------------------------------------------------------------
-  G.tests._show_type_and_content = ( error, type, content ) ->
+  G.tests._show_type_and_content = ( error, type, position, content ) ->
+    TYPES = require 'coffeenode-types'
     throw error if error?
-    info ( TEXT.flush_right type, 15 ), if content? then TRM.gold rpr content else ''
+    if TYPES.isa_pod type
+      return info ( "#{name}: #{value}" for name, value of type ).join ', '
+    if arguments.length <= 3
+      content = position
+      return info ( TEXT.flush_right type, 10 ), if content? then TRM.gold rpr content else ''
+    info ( TEXT.flush_right type, 10 ), ( TEXT.flush_left position, 8 ), if content? then TRM.gold rpr content else ''
 
   #---------------------------------------------------------------------------------------------------------
-  G.tests[ '_helpers.walk_chunkify_events_3 (0)' ] = ( test ) ->
-    source  = G.tests._sources[ 0 ]
-    #.......................................................................................................
-    G.helpers.walk_chunkify_events_3 source, ( error, type, content ) ->
-      G.tests._show_type_and_content error, type, content
-
-  #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'helpers.walk_chunkify_events_1 (1)' ] = ( test ) ->
+  G.tests[ 'helpers.step_chunkify_events (1)' ] = ( test ) ->
     source  = G.tests._sources[ 1 ]
     #.......................................................................................................
-    G.helpers.walk_chunkify_events_1 source, ( error, type, content ) ->
+    G.helpers.step_chunkify_events source, ( error, type, content ) ->
       G.tests._show_type_and_content error, type, content
 
   #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'helpers.walk_chunkify_events_2 (1)' ] = ( test ) ->
+  G.tests[ 'helpers.step_events (1)' ] = ( test ) ->
     source  = G.tests._sources[ 1 ]
     #.......................................................................................................
-    G.helpers.walk_chunkify_events_2 source, ( error, type, content ) ->
-      G.tests._show_type_and_content error, type, content
+    G.helpers.step_events source, ( error, event ) ->
+      G.tests._show_type_and_content error, event
 
   #---------------------------------------------------------------------------------------------------------
-  G.tests[ 'helpers.walk_chunkify_events_3 (1)' ] = ( test ) ->
+  G.tests[ 'helpers.step_events_with_levels (1)' ] = ( test ) ->
     source  = G.tests._sources[ 1 ]
     #.......................................................................................................
-    G.helpers.walk_chunkify_events_3 source, ( error, type, content ) ->
-      G.tests._show_type_and_content error, type, content
+    G.helpers.step_events_with_levels source, ( error, event ) ->
+      G.tests._show_type_and_content error, event
 
   #---------------------------------------------------------------------------------------------------------
   G.tests[ 'helpers.as_bracketed (1)' ] = ( test ) ->
     source  = G.tests._sources[ 1 ]
-    debug rpr G.helpers.as_bracketed source
-
-  #---------------------------------------------------------------------------------------------------------
-  G.tests[ '_helpers.as_bracketed (0)' ] = ( test ) ->
-    source  = G.tests._sources[ 0 ]
-    debug rpr G.helpers.as_bracketed source
-
-  #---------------------------------------------------------------------------------------------------------
-  G.tests[ '_helpers.as_bracketed (2)' ] = ( test ) ->
-    source  = G.tests._sources[ 2 ]
-    debug rpr G.helpers.as_bracketed source
+    debug JSON.stringify G.helpers.as_bracketed source
 
 
 ############################################################################################################
